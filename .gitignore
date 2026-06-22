@@ -1,0 +1,16 @@
+# Raw Kaggle CSVs — user-provided, excluded from version control & submission zip (large)
+/data/raw/
+
+# Python
+__pycache__/
+*.pyc
+
+# Node (only used transiently for headless testing — not part of the project)
+node_modules/
+package.json
+package-lock.json
+_smoke_test.js
+
+# OS / editor
+.DS_Store
+Thumbs.db

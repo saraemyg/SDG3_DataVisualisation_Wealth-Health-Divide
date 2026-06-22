@@ -1,0 +1,100 @@
+{
+  "title": "The Wealth-Health Divide: Does Money Buy Survival?",
+  "yearMin": 1960,
+  "yearMax": 2011,
+  "regions": [
+    "Europe & Central Asia",
+    "Americas",
+    "East Asia & Pacific",
+    "South Asia",
+    "Middle East & North Africa",
+    "Sub-Saharan Africa"
+  ],
+  "blocs": [
+    "OECD",
+    "OPEC",
+    "Other"
+  ],
+  "gdpTiers": [
+    "Low",
+    "Lower-Middle",
+    "Upper-Middle",
+    "High"
+  ],
+  "mortalityTiers": [
+    "Critical",
+    "High",
+    "Moderate",
+    "Low"
+  ],
+  "domains": {
+    "gdp_per_capita": [
+      54.889626625242016,
+      61340.89183006504
+    ],
+    "population": [
+      31238.0,
+      1348174478.0
+    ],
+    "life_expectancy": [
+      13.2,
+      83.02
+    ],
+    "infant_mortality": [
+      1.8,
+      276.9
+    ],
+    "health_expenditure": [
+      0.51596524,
+      12.61078231
+    ]
+  },
+  "tierThresholds": {
+    "gdp": [
+      {
+        "tier": "Low",
+        "min": 0,
+        "max": 1135
+      },
+      {
+        "tier": "Lower-Middle",
+        "min": 1135,
+        "max": 4465
+      },
+      {
+        "tier": "Upper-Middle",
+        "min": 4465,
+        "max": 13845
+      },
+      {
+        "tier": "High",
+        "min": 13845,
+        "max": null
+      }
+    ],
+    "mortality": [
+      {
+        "tier": "Critical",
+        "min": 50,
+        "max": null
+      },
+      {
+        "tier": "High",
+        "min": 25,
+        "max": 50
+      },
+      {
+        "tier": "Moderate",
+        "min": 10,
+        "max": 25
+      },
+      {
+        "tier": "Low",
+        "min": 0,
+        "max": 10
+      }
+    ]
+  },
+  "nRecords": 9620,
+  "nCountries": 185
+}

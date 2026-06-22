@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Wealth-Health Divide — SDG 3 Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Vendored libraries (offline-safe: no CDN dependency at grading time) -->
+  <script src="vendor/d3.v7.min.js"></script>
+  <script src="vendor/topojson-client.min.js"></script>
+</head>
+<body>
+  <!-- ===================== HEADER (controls affect all 6 charts) ===================== -->
+  <header class="app-header">
+    <div class="title-block">
+      <h1>The Wealth–Health Divide <span class="subtitle">Does money buy survival?</span></h1>
+      <p class="tagline">SDG 3 — Good Health &amp; Well-being · OECD vs OPEC vs the world, 1960–2015</p>
+    </div>
+
+    <div class="controls">
+      <div class="control year-control">
+        <label>Year</label>
+        <div class="year-row">
+          <button id="play-btn" class="play" title="Play / pause animation">▶</button>
+          <input type="range" id="year-slider" />
+          <output id="year-label">—</output>
+        </div>
+      </div>
+
+      <div class="control">
+        <label>Economic bloc</label>
+        <div id="bloc-toggle" class="seg"></div>
+      </div>
+
+      <div class="control region-control">
+        <label>Regions <span class="hint">(click to filter)</span></label>
+        <div id="region-chips" class="chips"></div>
+      </div>
+
+      <div class="control selection-control">
+        <label>Selected</label>
+        <div id="selection-readout" class="selection">none — click a country</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== DASHBOARD GRID (3 narrative zones) ===================== -->
+  <main class="dashboard">
+    <!-- ZONE 1 — ATTRACT -->
+    <div class="zone">
+      <div class="zone-label">① Attract — the global landscape in motion</div>
+      <div class="row row-2-1">
+        <section class="card" id="card-v1">
+          <div class="card-head">
+            <h2>V1 · Wealth vs survival, animated <span class="q">Q1 · Q2</span></h2>
+            <div class="legend" id="legend-v1"></div>
+          </div>
+          <div class="chart" id="v1"></div>
+          <p class="insight" id="insight-v1"></p>
+        </section>
+        <section class="card" id="card-v2">
+          <div class="card-head">
+            <h2>V2 · Bloc → wealth → mortality <span class="q">Q1</span></h2>
+            <div class="legend" id="legend-v2"></div>
+          </div>
+          <div class="chart" id="v2"></div>
+          <p class="insight" id="insight-v2"></p>
+        </section>
+      </div>
+    </div>
+
+    <!-- ZONE 2 — ENGAGE -->
+    <div class="zone">
+      <div class="zone-label">② Engage — explore spatial &amp; ranked patterns</div>
+      <div class="row row-1-1">
+        <section class="card" id="card-v4">
+          <div class="card-head">
+            <h2>V4 · Infant mortality world map <span class="q">Q2 · Q3</span></h2>
+            <div class="legend" id="legend-v4"></div>
+          </div>
+          <div class="chart" id="v4"></div>
+          <p class="insight" id="insight-v4"></p>
+        </section>
+        <section class="card" id="card-v3">
+          <div class="card-head">
+            <h2>V3 · Life-expectancy slope <span class="q">Q3</span></h2>
+            <div class="legend" id="legend-v3"></div>
+          </div>
+          <div class="v3-controls" id="v3-controls"></div>
+          <div class="chart" id="v3"></div>
+          <p class="insight" id="insight-v3"></p>
+        </section>
+      </div>
+    </div>
+
+    <!-- ZONE 3 — PUNCHLINE -->
+    <div class="zone">
+      <div class="zone-label">③ Punchline — the GDP threshold &amp; regional convergence</div>
+      <div class="row row-1-1">
+        <section class="card" id="card-v5">
+          <div class="card-head">
+            <h2>V5 · The GDP threshold <span class="q">Q2</span></h2>
+            <div class="legend" id="legend-v5"></div>
+          </div>
+          <div class="chart" id="v5"></div>
+          <p class="insight" id="insight-v5"></p>
+        </section>
+        <section class="card" id="card-v6">
+          <div class="card-head">
+            <h2>V6 · Regional convergence <span class="q">Q3</span></h2>
+            <div class="legend" id="legend-v6"></div>
+          </div>
+          <div class="chart" id="v6"></div>
+          <p class="insight" id="insight-v6"></p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <span id="footer-meta">CDS6324 Data Visualization · TT2L · SDG 3 · D3.js v7</span>
+  </footer>
+
+  <!-- module load order: foundation -> charts -> orchestrator -->
+  <script src="js/config.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/scales.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/v1_bubble.js"></script>
+  <script src="js/v2_sunburst.js"></script>
+  <script src="js/v3_slope.js"></script>
+  <script src="js/v4_choropleth.js"></script>
+  <script src="js/v5_connected_scatter.js"></script>
+  <script src="js/v6_small_multiples.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

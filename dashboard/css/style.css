@@ -1,0 +1,168 @@
+/* style.css — one typographic + colour system across the whole dashboard.
+ * Neutral backgrounds, muted gridlines, generous whitespace => high data-ink ratio
+ * (Tufte) and a clean, calm aesthetic (Shaffer "Clean", Cole Nussbaumer "Aesthetics"). */
+
+:root {
+  --font: 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  --ink: #222;
+  --muted: #777;
+  --line: #e4e4e4;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --shell: #f4f6f8;
+  --accent: #0072B2;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--shell);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ---------------- Header ---------------- */
+.app-header {
+  position: sticky; top: 0; z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.title-block h1 { margin: 0; font-size: 21px; font-weight: 650; }
+.title-block .subtitle { font-weight: 400; color: var(--muted); font-size: 16px; }
+.title-block .tagline { margin: 2px 0 10px; color: var(--muted); font-size: 12.5px; }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;
+}
+.control label {
+  display: block; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--muted); margin-bottom: 5px; font-weight: 600;
+}
+.control .hint { text-transform: none; font-weight: 400; letter-spacing: 0; }
+
+.year-control { min-width: 300px; flex: 1 1 320px; }
+.year-row { display: flex; align-items: center; gap: 10px; }
+#year-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
+#year-label { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; min-width: 42px; }
+.play {
+  border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; justify-content: center; flex: none;
+}
+.play.playing { background: #fff; color: var(--accent); }
+
+/* segmented bloc toggle */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button {
+  border: none; background: #fff; padding: 6px 12px; cursor: pointer; font-size: 13px;
+  color: var(--ink); border-right: 1px solid var(--line);
+}
+.seg button:last-child { border-right: none; }
+.seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+/* region chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; max-width: 460px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 14px; padding: 4px 10px; font-size: 12px;
+  background: #fff; user-select: none;
+}
+.chip .dot { width: 10px; height: 10px; border-radius: 50%; }
+.chip.off { opacity: 0.35; }
+
+.selection { font-size: 13px; font-weight: 600; }
+.selection.empty { font-weight: 400; color: var(--muted); }
+.selection .clear { margin-left: 8px; color: var(--accent); cursor: pointer; font-weight: 400; text-decoration: underline; }
+
+/* ---------------- Dashboard layout (flex column of 3 narrative zones) ---------------- */
+.dashboard {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 16px 20px 28px;
+  max-width: 1540px; margin: 0 auto;
+}
+.zone { display: flex; flex-direction: column; gap: 6px; }
+.zone-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--muted);
+}
+.row { display: grid; gap: 16px; align-items: stretch; }
+.row-2-1 { grid-template-columns: 2fr 1fr; }   /* Attract: bubble wide, sunburst narrow */
+.row-1-1 { grid-template-columns: 1fr 1fr; }   /* Engage & Punchline: equal halves */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.card-head h2 { margin: 0; font-size: 14.5px; font-weight: 650; }
+.card-head .q {
+  font-size: 10.5px; font-weight: 700; color: #fff; background: #8a8a8a;
+  border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.03em;
+}
+.chart { width: 100%; min-width: 0; }
+.chart svg { width: 100%; height: auto; display: block; font-family: var(--font); }
+.insight { margin: 8px 2px 0; font-size: 12px; color: #555; line-height: 1.45; }
+
+/* ---------------- Legends ---------------- */
+.legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.legend-block { font-size: 11px; }
+.legend-title { font-weight: 600; color: var(--muted); margin-bottom: 3px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; }
+.legend-items.v { display: flex; flex-direction: column; gap: 2px; }
+.legend-items.h { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-item .swatch { width: 11px; height: 11px; display: inline-block; flex: none; }
+.legend-label { color: var(--ink); }
+.legend-axis text { font-size: 9px; fill: var(--muted); }
+.legend-axis path, .legend-axis line { stroke: #ccc; }
+.size-legend-label { font-size: 9px; fill: var(--muted); }
+
+/* ---------------- Axes (shared) ---------------- */
+.axis text { fill: var(--muted); font-size: 10.5px; }
+.axis path, .axis line { stroke: #cfcfcf; }
+.grid line { stroke: var(--line); shape-rendering: crispEdges; }
+.grid path { stroke: none; }
+.axis-title { fill: #555; font-size: 11px; font-weight: 600; }
+
+/* ---------------- V3 inline controls ---------------- */
+.v3-controls { display: flex; gap: 14px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.v3-controls select { font-family: var(--font); font-size: 12px; padding: 2px 4px; }
+
+/* ---------------- marks / highlight ---------------- */
+.dimmed { opacity: 0.12 !important; }
+.selected-stroke { stroke: #111; stroke-width: 2px; }
+
+/* ---------------- Tooltip ---------------- */
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 100;
+  background: rgba(255,255,255,0.98); border: 1px solid #ccc; border-radius: 6px;
+  padding: 8px 10px; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  max-width: 260px; transition: opacity 0.1s;
+}
+.tooltip .tt-title { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.tooltip .tt-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.tooltip .tt-sub { color: var(--muted); margin: 1px 0 5px; font-size: 11px; }
+.tooltip table { border-collapse: collapse; }
+.tooltip td { padding: 1px 0; }
+.tooltip td:first-child { color: var(--muted); padding-right: 12px; }
+.tooltip td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ---------------- Footer ---------------- */
+.app-footer { padding: 14px 20px 26px; color: var(--muted); font-size: 11.5px; text-align: center; }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 980px) {
+  .row-2-1, .row-1-1 { grid-template-columns: 1fr; }
+}
+
+.loading { padding: 40px; text-align: center; color: var(--muted); }
+.error-box { padding: 20px; margin: 20px; background: #fff3f3; border: 1px solid #f0c0c0; border-radius: 8px; color: #a33; }

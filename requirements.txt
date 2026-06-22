@@ -1,0 +1,4 @@
+# Data-preprocessing pipeline only (the dashboard itself needs no Python).
+# The ISO code map is pre-generated and embedded in preprocessing/iso_map.py,
+# so pycountry is NOT required to run preprocessing/clean_merge.py.
+pandas>=2.0
