@@ -88,9 +88,44 @@ body {
 .chip .dot { width: 10px; height: 10px; border-radius: 50%; }
 .chip.off { opacity: 0.35; }
 
-.selection { font-size: 13px; font-weight: 600; }
+.selection { font-size: 13px; font-weight: 600; margin-top: 4px; }
 .selection.empty { font-weight: 400; color: var(--muted); }
 .selection .clear { margin-left: 8px; color: var(--accent); cursor: pointer; font-weight: 400; text-decoration: underline; }
+
+/* country search box */
+.country-search {
+  font-family: var(--font); font-size: 12.5px; padding: 5px 8px; width: 200px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff;
+}
+.country-search:focus { outline: none; border-color: var(--accent); }
+
+/* reset button */
+.reset-btn {
+  font-family: var(--font); font-size: 12.5px; cursor: pointer; padding: 6px 12px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+}
+.reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* cute little info badge (next to "The pattern:") */
+.info-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%; margin: 0 5px;
+  background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+  font-style: normal; cursor: help; vertical-align: middle; line-height: 1;
+  box-shadow: 0 1px 2px rgba(0,114,178,0.4);
+}
+.info-badge:hover { background: #005a8f; }
+
+/* V2 "colour by" toggle (mini segmented control inside the card) */
+.v2-controls { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+.v2-controls .v2-label { color: var(--muted); }
+.seg-mini { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg-mini button {
+  border: none; background: #fff; padding: 4px 10px; cursor: pointer; font-size: 12px;
+  color: var(--ink); border-right: 1px solid var(--line);
+}
+.seg-mini button:last-child { border-right: none; }
+.seg-mini button.active { background: var(--accent); color: #fff; font-weight: 600; }
 
 /* ---------------- Dashboard layout (flex column of 3 narrative zones) ---------------- */
 .dashboard {

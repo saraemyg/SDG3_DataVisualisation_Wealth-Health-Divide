@@ -42,7 +42,14 @@
 
       <div class="control selection-control">
         <label>Spotlighted country</label>
+        <input id="country-search" class="country-search" list="country-list" placeholder="🔍 search a country…" autocomplete="off" />
+        <datalist id="country-list"></datalist>
         <div id="selection-readout" class="selection">none — click any country</div>
+      </div>
+
+      <div class="control reset-control">
+        <label>&nbsp;</label>
+        <button id="reset-btn" class="reset-btn" title="Clear the year, filters and selection back to defaults">↺ Reset all</button>
       </div>
     </div>
 
@@ -78,6 +85,7 @@
             </div>
             <div class="legend" id="legend-v2"></div>
           </div>
+          <div class="v2-controls" id="v2-controls"></div>
           <div class="chart" id="v2"></div>
           <p class="insight" id="insight-v2"></p>
         </section>

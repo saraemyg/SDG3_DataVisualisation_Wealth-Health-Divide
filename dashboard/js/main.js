@@ -40,13 +40,23 @@
     };
     const oecd = mean("OECD"), opec = mean("OPEC");
     const thr = (App.charts.v5 && App.charts.v5.threshold) ? App.charts.v5.threshold() : null;
-    let txt = "<b>The pattern:</b> as countries grow richer, fewer of their children die — ";
+    let txt = `<b>The pattern:</b><span class="info-badge" id="pattern-info" tabindex="0">i</span> as countries grow richer, fewer of their children die — `;
     if (thr) txt += `but most of that gain happens below about <b>$${d3.format(",.0f")(thr)} per person</b>; ` +
       "beyond that, extra wealth barely moves the needle. ";
     if (oecd && opec) txt += `Even so, in ${meta.yearMax} people in wealthy <b>OECD</b> nations still lived about ` +
       `<b>${(oecd - opec).toFixed(0)} years longer</b> on average than in oil-exporting <b>OPEC</b> nations. `;
     txt += "Use the controls to see for yourself.";
     d3.select("#standfirst").html(txt);
+
+    // cute info icon explains where these numbers come from (honest framing)
+    const infoHtml = `<div class="tt-title">How this is worked out</div>` +
+      `<div class="tt-sub" style="white-space:normal">These figures are computed straight from the data below: ` +
+      `the GDP-per-person level where infant mortality stops falling steeply, and the OECD−OPEC life-expectancy ` +
+      `gap in ${meta.yearMax}. It's an observed correlation — not proof that money alone makes people live longer.</div>`;
+    d3.select("#pattern-info")
+      .on("mouseenter", e => App.util.tooltip.show(infoHtml, e))
+      .on("mousemove", e => App.util.tooltip.move(e))
+      .on("mouseleave", App.util.tooltip.hide);
   }
 
   /* ----------------------------- header controls ----------------------------- */
@@ -89,8 +99,41 @@
         d3.select(this).classed("off", !S.s.activeRegions.has(r));
       });
 
-    // selection readout reacts to linked selection
-    S.on("select", "header", updateSelectionReadout);
+    // --- country search (autocomplete via datalist) ---
+    const names = Array.from(S.s.byCountry.keys()).sort(d3.ascending);
+    d3.select("#country-list").selectAll("option").data(names).join("option").attr("value", d => d);
+    d3.select("#country-search").on("change", function () {
+      const v = this.value.trim();
+      if (S.s.byCountry.has(v)) S.selectCountry(v);
+      else if (v === "") S.clearSelection();
+    });
+
+    // --- reset-to-default button ---
+    d3.select("#reset-btn").on("click", resetAll);
+
+    // selection readout + search box react to linked selection
+    S.on("select", "header", function (c) {
+      updateSelectionReadout(c);
+      d3.select("#country-search").property("value", c || "");
+    });
+  }
+
+  /* reset every control + chart back to the initial view */
+  function resetAll() {
+    stopAnim();
+    const meta = S.s.meta;
+    S.clearSelection();
+    S.setBloc("All");
+    d3.select("#bloc-toggle").selectAll("button").classed("active", b => b === "All");
+    S.setRegions(new Set(meta.regions));
+    d3.select("#region-chips").selectAll(".chip").classed("off", false);
+    S.setYear(meta.yearMax);
+    const a = Math.max(meta.yearMin, 1965);
+    S.setSlopeYears(a, meta.yearMax);
+    d3.select("#v3-sel-a").property("value", a);
+    d3.select("#v3-sel-b").property("value", meta.yearMax);
+    if (App.charts.v2 && App.charts.v2.setMode) App.charts.v2.setMode("region");
+    d3.select("#country-search").property("value", "");
   }
 
   function updateSelectionReadout(country) {
