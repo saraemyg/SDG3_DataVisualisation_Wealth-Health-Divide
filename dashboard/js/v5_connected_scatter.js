@@ -23,16 +23,19 @@ App.charts.v5 = (function () {
 
     // grid + axes
     g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-iW).tickFormat("")).select(".domain").remove();
+    const xticks = [200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+      .filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
     g.append("g").attr("class", "axis").attr("transform", `translate(0,${iH})`)
-      .call(d3.axisBottom(x).ticks(6, "~s").tickFormat(d => "$" + d3.format("~s")(d)));
+      .call(d3.axisBottom(x).tickValues(xticks).tickFormat(d => "$" + d3.format("~s")(d)));
     g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(6));
     g.append("text").attr("class", "axis-title").attr("x", iW).attr("y", iH + 40).attr("text-anchor", "end")
-      .text("GDP per capita (US$, log) →");
+      .text("GDP per person (US$ — each gridline ×10) →");
     g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)").attr("x", 0).attr("y", -42)
-      .attr("text-anchor", "end").text("↑ Infant mortality (per 1,000)");
+      .attr("text-anchor", "end").text("↑ Infant deaths per 1,000 births");
 
     drawThreshold();
     g.append("g").attr("class", "trajectories");
+    g.append("g").attr("class", "exemplars");
     g.append("g").attr("class", "year-dots");
 
     buildLegend();
@@ -62,10 +65,11 @@ App.charts.v5 = (function () {
     g.insert("rect", ".grid + *").attr("x", x(threshold.bandLo)).attr("width", x(threshold.bandHi) - x(threshold.bandLo))
       .attr("y", 0).attr("height", iH).attr("fill", "#0072B2").attr("opacity", 0.06);
     g.append("line").attr("x1", x(threshold.value)).attr("x2", x(threshold.value)).attr("y1", 0).attr("y2", iH)
-      .attr("stroke", "#0072B2").attr("stroke-dasharray", "4 3").attr("stroke-width", 1.4);
-    g.append("text").attr("x", x(threshold.value)).attr("y", 12).attr("text-anchor", "middle")
-      .attr("font-size", 10).attr("fill", "#0072B2").attr("font-weight", 600)
-      .text(`≈ $${d3.format(",.0f")(threshold.value)} threshold`);
+      .attr("stroke", "#0a5a8a").attr("stroke-dasharray", "5 3").attr("stroke-width", 1.8);
+    App.util.annotate(g, {
+      x: x(threshold.value) + 7, y: 15, anchor: "start", color: "#0a5a8a",
+      text: [`Survival threshold ≈ $${d3.format(",.0f")(threshold.value)}`, "right of here, more money barely helps"]
+    });
   }
 
   function filteredCountries() {
@@ -86,11 +90,38 @@ App.charts.v5 = (function () {
       .on("mousemove", function (e, d) { App.util.tooltip.show(`<div class="tt-title">${d.country}</div><div class="tt-sub">${d.region} · full trajectory</div>`, e); })
       .on("mouseleave", App.util.tooltip.hide)
       .on("click", (e, d) => S.selectCountry(d.country));
+    drawExemplars();
     updateYearDots();
     applyHighlight(S.s.selectedCountry);
     d3.select("#insight-v5").text(
-      `Each thread is one country's path through GDP–mortality space. Mortality collapses as GDP ` +
-      `rises past ≈ $${d3.format(",.0f")(threshold.value)} (dashed line); below it, countries vary widely.`);
+      `Each faint thread is one country's path as it grew richer. The two bold paths show the contrast: ` +
+      `child deaths fall steeply up to ≈ $${d3.format(",.0f")(threshold.value)}, then barely move.`);
+  }
+
+  // Two bold, labelled exemplar journeys lift the "punchline" out of the faint background:
+  // a dramatic climber (South Korea) vs. an oil economy where wealth didn't buy the same gains.
+  const EXEMPLARS = ["Korea, Rep.", "Nigeria"];
+  function niceName(n) { return n === "Korea, Rep." ? "South Korea" : n; }
+  function drawExemplars() {
+    const sel = EXEMPLARS.map(name => {
+      const recs = (S.s.byCountry.get(name) || []).filter(d => d.gdp_per_capita != null && d.infant_mortality != null);
+      return recs.length ? { country: name, region: recs[0].region, recs } : null;
+    }).filter(d => d && S.passFilter(d.recs[0]));
+    g.select(".exemplars").selectAll("g.ex").data(sel, d => d.country).join(
+      enter => {
+        const gex = enter.append("g").attr("class", "ex");
+        gex.append("path").attr("fill", "none").attr("stroke-linejoin", "round");
+        gex.append("text").attr("class", "anno-text").attr("font-size", 11.5).attr("font-weight", 700);
+        return gex;
+      },
+      update => update, exit => exit.remove()
+    ).each(function (d) {
+      const gex = d3.select(this), last = d.recs[d.recs.length - 1];
+      gex.select("path").attr("stroke", App.scales.region(d.region)).attr("stroke-width", 2.6)
+        .attr("opacity", 0.95).attr("d", line(d.recs));
+      gex.select("text").attr("x", x(last.gdp_per_capita) + 6).attr("y", y(last.infant_mortality))
+        .attr("dy", "0.32em").attr("fill", App.scales.region(d.region)).text(niceName(d.country));
+    });
   }
 
   function updateYearDots() {
@@ -98,7 +129,7 @@ App.charts.v5 = (function () {
     const dots = filteredCountries().map(c => c.recs.find(r => r.year === yr))
       .filter(r => r && r.gdp_per_capita != null && r.infant_mortality != null);
     g.select(".year-dots").selectAll("circle").data(dots, d => d.country).join(
-      enter => enter.append("circle").attr("r", 3).attr("stroke", "#fff").attr("stroke-width", 0.6)
+      enter => enter.append("circle").attr("r", 3.4).attr("stroke", "#fff").attr("stroke-width", 0.7)
         .attr("fill", d => App.scales.region(d.region)).style("cursor", "pointer")
         .attr("cx", d => x(d.gdp_per_capita)).attr("cy", d => y(d.infant_mortality))
         .on("mousemove", (e, d) => App.util.tooltip.show(App.util.countryTooltip(d, yr), e))
@@ -118,16 +149,17 @@ App.charts.v5 = (function () {
       .filter(d => d.country === country).raise();
     g.select(".year-dots").selectAll("circle")
       .classed("dimmed", d => country && d.country !== country)
-      .attr("r", d => (country && d.country === country) ? 5 : 3);
+      .attr("r", d => (country && d.country === country) ? 5 : 3.4);
+    // when a country is spotlighted, mute the default exemplars so they don't compete
+    g.select(".exemplars").attr("opacity", country ? 0.12 : 1);
   }
 
   function buildLegend() {
-    App.util.discreteLegend(d3.select("#legend-v5"), "Region (colour)",
-      S.s.meta.regions.map(rg => ({ label: rg, color: App.scales.region(rg) })), { horizontal: true });
+    // region colour key is in the header; keep only this chart's reading aid
     d3.select("#legend-v5").append("div").attr("class", "legend-block")
       .append("div").attr("class", "legend-title").style("text-transform", "none").style("font-weight", "400")
-      .html("● = current-year position · thread = 1960→2015 path");
+      .html("● = where each country sits this year · faint thread = its 1960→2011 path");
   }
 
-  return { init };
+  return { init, threshold: () => threshold.value };
 })();

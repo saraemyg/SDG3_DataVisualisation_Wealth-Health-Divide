@@ -57,7 +57,7 @@ App.charts.v6 = (function () {
         gp.append("path").attr("class", "band");
         gp.append("path").attr("class", "median");
         gp.append("line").attr("class", "year-guide").attr("y1", 0).attr("y2", panelH).attr("stroke", "#999").attr("stroke-dasharray", "2 2").attr("opacity", 0.7);
-        gp.append("text").attr("class", "panel-title").attr("x", 4).attr("y", 12).attr("font-size", 10).attr("font-weight", 600);
+        gp.append("text").attr("class", "panel-title").attr("x", 4).attr("y", 12).attr("font-size", 11.5).attr("font-weight", 700);
         gp.append("g").attr("class", "p-axis x").attr("transform", `translate(0,${panelH})`);
         gp.append("g").attr("class", "p-axis y");
         return gp;
@@ -70,8 +70,8 @@ App.charts.v6 = (function () {
       gp.select(".median").datum(data).attr("d", med).attr("fill", "none")
         .attr("stroke", App.scales.region(region)).attr("stroke-width", 1.6);
       gp.select(".panel-title").attr("fill", App.scales.region(region)).text(region);
-      gp.select(".p-axis.x").call(d3.axisBottom(x).ticks(4).tickFormat(d3.format("d"))).selectAll("text").attr("font-size", 8);
-      gp.select(".p-axis.y").call(d3.axisLeft(y).ticks(4)).selectAll("text").attr("font-size", 8);
+      gp.select(".p-axis.x").call(d3.axisBottom(x).ticks(4).tickFormat(d3.format("d"))).selectAll("text").attr("font-size", 9.5);
+      gp.select(".p-axis.y").call(d3.axisLeft(y).ticks(4)).selectAll("text").attr("font-size", 9.5);
     });
 
     updateYearGuides();
@@ -119,11 +119,11 @@ App.charts.v6 = (function () {
   }
 
   function buildLegend() {
-    App.util.discreteLegend(d3.select("#legend-v6"), "Region (panel + colour)",
-      S.s.meta.regions.map(rg => ({ label: rg, color: App.scales.region(rg) })), { horizontal: true });
+    // each panel is already labelled + coloured by region (and the header has the colour key),
+    // so we only need to explain the band/line encoding here.
     d3.select("#legend-v6").append("div").attr("class", "legend-block")
       .append("div").attr("class", "legend-title").style("text-transform", "none").style("font-weight", "400")
-      .html("band = min–max · line = median · dashed = current year");
+      .html("shaded band = min–max spread · line = median · dashed = current year");
   }
 
   return { init };

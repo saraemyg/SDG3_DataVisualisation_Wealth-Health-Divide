@@ -15,8 +15,9 @@ App.config = {
     "Sub-Saharan Africa": "#56B4E9"
   },
 
-  // economic blocs (sunburst inner ring, bloc toggle)
-  blocColors: { "OECD": "#0072B2", "OPEC": "#D55E00", "Other": "#BDBDBD" },
+  // economic blocs (hierarchy chart). Deliberately OUTSIDE the region palette (no blue/
+  // orange/green/pink) so "blue = Europe" everywhere is never confused with a bloc colour.
+  blocColors: { "OECD": "#5E4FA2", "OPEC": "#9E6D00", "Other": "#9AA0A6" },
 
   // GDP wealth tiers (ordinal, light->dark green = ColorBrewer Greens)
   gdpTierColors: {

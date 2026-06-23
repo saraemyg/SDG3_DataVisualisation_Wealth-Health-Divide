@@ -96,5 +96,38 @@ App.util = (function () {
     return box;
   }
 
-  return { tooltip, countryTooltip, discreteLegend, gradientLegend, sizeLegend };
+  /* On-chart annotation: a halo'd text label (optionally with a leader line) placed directly
+   * at the meaningful point — turns a pattern into a stated insight (best practice: annotate
+   * the takeaway). `text` may be a string or array of lines; first line is bold. */
+  function annotate(g, o) {
+    const grp = g.append("g").attr("class", "annotation").attr("pointer-events", "none");
+    if (o.leaderTo) {
+      grp.append("line").attr("x1", o.x).attr("y1", o.y)
+        .attr("x2", o.leaderTo[0]).attr("y2", o.leaderTo[1])
+        .attr("stroke", o.color || "#555").attr("stroke-width", 1).attr("stroke-dasharray", "2 2");
+      grp.append("circle").attr("cx", o.leaderTo[0]).attr("cy", o.leaderTo[1]).attr("r", 2.5)
+        .attr("fill", o.color || "#555");
+    }
+    const lines = Array.isArray(o.text) ? o.text : [o.text];
+    const t = grp.append("text").attr("x", o.x).attr("y", o.y)
+      .attr("text-anchor", o.anchor || "start").attr("class", "anno-text").attr("fill", o.color || "#1a1a1a");
+    lines.forEach((ln, i) => t.append("tspan").attr("x", o.x)
+      .attr("dy", i === 0 ? (o.dy || 0) : "1.15em")
+      .attr("font-weight", i === 0 ? 700 : 400).text(ln));
+    return grp;
+  }
+
+  /* 1-D label de-overlap: given an array of preferred y values, return adjusted y values
+   * (same order) so that no two are closer than `gap`. Used for V3's endpoint labels. */
+  function dodge(positions, gap) {
+    const order = positions.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+    for (let k = 1; k < order.length; k++) {
+      if (order[k].y - order[k - 1].y < gap) order[k].y = order[k - 1].y + gap;
+    }
+    const out = new Array(positions.length);
+    order.forEach(o => { out[o.i] = o.y; });
+    return out;
+  }
+
+  return { tooltip, countryTooltip, discreteLegend, gradientLegend, sizeLegend, annotate, dodge };
 })();

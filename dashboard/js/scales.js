@@ -18,18 +18,18 @@ App.scales = (function () {
       .range(meta.regions.map(r => cfg.regionColors[r]))
       .unknown("#cccccc");
 
-    // categorical — bloc (sunburst inner ring, bubble outline option)
+    // categorical — bloc (icicle colour; palette chosen outside the region hues)
     api.bloc = d3.scaleOrdinal()
       .domain(meta.blocs)
       .range(meta.blocs.map(b => cfg.blocColors[b]))
       .unknown("#cccccc");
 
-    // ordinal — GDP wealth tier (sunburst middle ring)
+    // ordinal — GDP wealth tier (icicle income band)
     api.gdpTier = d3.scaleOrdinal()
       .domain(meta.gdpTiers)
       .range(meta.gdpTiers.map(t => cfg.gdpTierColors[t]));
 
-    // ordinal — infant-mortality severity tier (sunburst outer-ish ring, legends)
+    // ordinal — infant-mortality severity tier (icicle mortality band, legends)
     api.mortalityTier = d3.scaleOrdinal()
       .domain(meta.mortalityTiers)
       .range(meta.mortalityTiers.map(t => cfg.mortalityTierColors[t]));

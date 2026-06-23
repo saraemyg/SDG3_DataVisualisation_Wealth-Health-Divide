@@ -18,7 +18,7 @@ App.charts.v1 = (function () {
 
     x = App.scales.gdpX([0, iW]);
     y = App.scales.lifeY([iH, 0]);
-    r = App.scales.popR(44);
+    r = App.scales.popR(38);
 
     // gridlines (muted — high data-ink)
     g.append("g").attr("class", "grid")
@@ -29,14 +29,16 @@ App.charts.v1 = (function () {
       .attr("x", iW - 6).attr("y", iH - 8).attr("text-anchor", "end")
       .attr("font-size", 76).attr("font-weight", 700).attr("fill", "#f0f0f0");
 
-    // axes
+    // axes — label a clean 1-2-5 sequence so the log ticks don't pile up illegibly
+    const xticks = [200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+      .filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
     g.append("g").attr("class", "axis x-axis").attr("transform", `translate(0,${iH})`)
-      .call(d3.axisBottom(x).ticks(6, "~s").tickFormat(d => "$" + d3.format("~s")(d)));
+      .call(d3.axisBottom(x).tickValues(xticks).tickFormat(d => "$" + d3.format("~s")(d)));
     g.append("g").attr("class", "axis y-axis").call(d3.axisLeft(y).ticks(7));
 
     // axis titles
     g.append("text").attr("class", "axis-title").attr("x", iW).attr("y", iH + 40)
-      .attr("text-anchor", "end").text("GDP per capita (US$, log scale) →");
+      .attr("text-anchor", "end").text("GDP per person (US$ — each gridline ×10) →");
     g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)")
       .attr("x", 0).attr("y", -44).attr("text-anchor", "end").text("Life expectancy (years) →");
 
@@ -80,8 +82,22 @@ App.charts.v1 = (function () {
         .attr("r", d => r(d.population))),
       exit => exit.call(ex => ex.transition().duration(dur).attr("r", 0).remove())
     );
+    drawAnnotation(data);
     applyHighlight(S.s.selectedCountry);
     setInsight(data, year);
+  }
+
+  // call out the "rich & long-lived" corner where OECD nations cluster (Q1 story);
+  // redrawn each frame so it follows the cluster as the years play.
+  function drawAnnotation(data) {
+    g.selectAll(".annotation").remove();
+    const oecd = data.filter(d => d.bloc === "OECD");
+    if (oecd.length < 3) return;
+    const cx = d3.mean(oecd, d => x(d.gdp_per_capita)), cy = d3.mean(oecd, d => y(d.life_expectancy));
+    App.util.annotate(g, {
+      x: Math.max(4, Math.min(cx - 40, iW - 150)), y: 22, anchor: "start",
+      text: ["Rich & long-lived", "— mostly OECD nations"], leaderTo: [cx, cy], color: "#5E4FA2"
+    });
   }
 
   function applyHighlight(country) {
@@ -102,11 +118,9 @@ App.charts.v1 = (function () {
   }
 
   function buildLegend() {
-    const sel = d3.select("#legend-v1");
-    App.util.discreteLegend(sel, "Region (hue)",
-      S.s.meta.regions.map(rg => ({ label: rg, color: App.scales.region(rg) })),
-      { horizontal: true, circle: true });
-    App.util.sizeLegend(sel, "Population (area)", r,
+    // region colour key lives once in the header (the chips) — here we only need the
+    // chart-specific size key, so we don't repeat the 6 region names on every chart.
+    App.util.sizeLegend(d3.select("#legend-v1"), "Population (bubble area)", r,
       [1e7, 1e8, 1e9], v => d3.format(".0s")(v).replace("G", "B"));
   }
 

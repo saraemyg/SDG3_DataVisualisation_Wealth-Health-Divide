@@ -22,6 +22,7 @@
     buildHeader(bundle.meta);
     mountCharts();
     updateSelectionReadout(null);
+    buildStandfirst(bundle.meta);
     document.getElementById("footer-meta").textContent =
       `CDS6324 · TT2L · SDG 3 · D3.js v7 · ${bundle.meta.nRecords.toLocaleString()} records · ` +
       `${bundle.meta.nCountries} countries · ${bundle.meta.yearMin}–${bundle.meta.yearMax}`;
@@ -29,6 +30,24 @@
     console.error(err);
     fail(err && err.message ? err.message : String(err));
   });
+
+  /* ----------------------------- standfirst (headline finding) ----------------------------- */
+  function buildStandfirst(meta) {
+    const atYr = (S.s.byYear.get(meta.yearMax) || []);
+    const mean = b => {
+      const a = atYr.filter(d => d.bloc === b && d.life_expectancy != null);
+      return a.length ? d3.mean(a, d => d.life_expectancy) : null;
+    };
+    const oecd = mean("OECD"), opec = mean("OPEC");
+    const thr = (App.charts.v5 && App.charts.v5.threshold) ? App.charts.v5.threshold() : null;
+    let txt = "<b>The pattern:</b> as countries grow richer, fewer of their children die — ";
+    if (thr) txt += `but most of that gain happens below about <b>$${d3.format(",.0f")(thr)} per person</b>; ` +
+      "beyond that, extra wealth barely moves the needle. ";
+    if (oecd && opec) txt += `Even so, in ${meta.yearMax} people in wealthy <b>OECD</b> nations still lived about ` +
+      `<b>${(oecd - opec).toFixed(0)} years longer</b> on average than in oil-exporting <b>OPEC</b> nations. `;
+    txt += "Use the controls to see for yourself.";
+    d3.select("#standfirst").html(txt);
+  }
 
   /* ----------------------------- header controls ----------------------------- */
   function buildHeader(meta) {
@@ -76,7 +95,7 @@
 
   function updateSelectionReadout(country) {
     const el = d3.select("#selection-readout");
-    if (!country) { el.attr("class", "selection empty").text("none — click a country"); return; }
+    if (!country) { el.attr("class", "selection empty").text("none — click any country"); return; }
     el.attr("class", "selection").html("");
     el.append("span").text(country);
     el.append("span").attr("class", "clear").text("clear").on("click", () => S.clearSelection());

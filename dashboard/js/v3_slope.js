@@ -52,11 +52,13 @@ App.charts.v3 = (function () {
         rows.push({ country, region: db.region, valA: da.life_expectancy, valB: db.life_expectancy });
       }
     });
-    rows.sort((p, q) => q.valB - p.valB).splice(20); // top 20 by later-year life expectancy
+    rows.sort((p, q) => q.valB - p.valB).splice(12); // top 12 keeps labels legible
 
     const xL = 0, xR = iW;
     y = d3.scaleLinear()
       .domain(d3.extent(rows.flatMap(d => [d.valA, d.valB]))).nice().range([iH, 0]);
+    // de-overlap the right-hand country labels (was an unreadable blob at 20 rows)
+    const dodged = App.util.dodge(rows.map(d => y(d.valB)), 13);
 
     g.selectAll("*").remove();
     // axis labels (years)
@@ -76,8 +78,12 @@ App.charts.v3 = (function () {
       .attr("stroke", d => App.scales.region(d.region)).attr("stroke-width", 2).attr("opacity", 0.85);
     grp.append("circle").attr("cx", xL).attr("cy", d => y(d.valA)).attr("r", 3).attr("fill", d => App.scales.region(d.region));
     grp.append("circle").attr("cx", xR).attr("cy", d => y(d.valB)).attr("r", 3).attr("fill", d => App.scales.region(d.region));
-    grp.append("text").attr("x", xR + 6).attr("y", d => y(d.valB)).attr("dy", "0.32em")
-      .attr("font-size", 10).attr("fill", "#444").text(d => `${d.country} (${d.valB.toFixed(0)})`);
+    // thin connector from the endpoint to the dodged label position
+    grp.append("line").attr("x1", xR).attr("y1", d => y(d.valB))
+      .attr("x2", xR + 6).attr("y2", (d, i) => dodged[i])
+      .attr("stroke", d => App.scales.region(d.region)).attr("stroke-width", 0.6).attr("opacity", 0.55);
+    grp.append("text").attr("x", xR + 9).attr("y", (d, i) => dodged[i]).attr("dy", "0.32em")
+      .attr("font-size", 10.5).attr("fill", "#333").text(d => `${shortName(d.country)} ${d.valB.toFixed(0)}`);
 
     applyHighlight(S.s.selectedCountry);
     const climber = rows.length ? rows.reduce((m, d) => (d.valB - d.valA) > (m.valB - m.valA) ? d : m) : null;
@@ -102,9 +108,13 @@ App.charts.v3 = (function () {
       <tr><td>Change</td><td>${delta >= 0 ? "+" : ""}${delta.toFixed(1)} yrs</td></tr></table>`;
   }
 
+  function shortName(n) { return n.length > 14 ? n.slice(0, 13) + "…" : n; }
+
   function buildLegend() {
-    App.util.discreteLegend(d3.select("#legend-v3"), "Region (colour)",
-      S.s.meta.regions.map(rg => ({ label: rg, color: App.scales.region(rg) })), { horizontal: true });
+    // region colour key is in the header; here a short reading aid is more useful than repeating it
+    d3.select("#legend-v3").append("div").attr("class", "legend-block")
+      .append("div").attr("class", "legend-title").style("text-transform", "none").style("font-weight", "400")
+      .html("colour = region · number = life expectancy in the later year");
   }
 
   return { init };

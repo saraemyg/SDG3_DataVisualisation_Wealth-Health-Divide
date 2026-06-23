@@ -32,9 +32,22 @@ body {
   padding: 12px 20px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
-.title-block h1 { margin: 0; font-size: 21px; font-weight: 650; }
+.title-block h1 { margin: 0; font-size: 22px; font-weight: 680; }
 .title-block .subtitle { font-weight: 400; color: var(--muted); font-size: 16px; }
-.title-block .tagline { margin: 2px 0 10px; color: var(--muted); font-size: 12.5px; }
+.title-block .tagline { margin: 2px 0 8px; color: var(--muted); font-size: 12.5px; }
+
+/* standfirst — the plain-language headline finding (filled with real numbers by main.js) */
+.standfirst {
+  margin: 0 0 12px; font-size: 14.5px; line-height: 1.5; color: #2a2a2a;
+  border-left: 3px solid var(--accent); padding: 8px 14px; background: #f6fafd; border-radius: 0 4px 4px 0;
+}
+.standfirst b { color: var(--accent); }
+
+/* how-to strip — three affordance hints */
+.how-to { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.how-to span { display: inline-flex; align-items: center; gap: 5px; }
+.how-to span::before { content: "→"; color: var(--accent); font-weight: 700; }
+.how-to b { color: var(--ink); font-weight: 600; }
 
 .controls {
   display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;
@@ -82,8 +95,8 @@ body {
 /* ---------------- Dashboard layout (flex column of 3 narrative zones) ---------------- */
 .dashboard {
   display: flex; flex-direction: column; gap: 14px;
-  padding: 16px 20px 28px;
-  max-width: 1540px; margin: 0 auto;
+  padding: 16px 16px 28px;
+  max-width: min(96vw, 1840px); margin: 0 auto;
 }
 .zone { display: flex; flex-direction: column; gap: 6px; }
 .zone-label {
@@ -91,7 +104,7 @@ body {
   color: var(--muted);
 }
 .row { display: grid; gap: 16px; align-items: stretch; }
-.row-2-1 { grid-template-columns: 2fr 1fr; }   /* Attract: bubble wide, sunburst narrow */
+.row-2-1 { grid-template-columns: 1.8fr 1fr; }  /* big picture: bubble + roomy sunburst */
 .row-1-1 { grid-template-columns: 1fr 1fr; }   /* Engage & Punchline: equal halves */
 
 .card {
@@ -103,15 +116,18 @@ body {
   display: flex; flex-direction: column;
   min-width: 0;
 }
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-.card-head h2 { margin: 0; font-size: 14.5px; font-weight: 650; }
-.card-head .q {
-  font-size: 10.5px; font-weight: 700; color: #fff; background: #8a8a8a;
-  border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.03em;
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px 16px; margin-bottom: 10px; flex-wrap: wrap; }
+.card-titles { flex: 1 1 260px; min-width: 0; }
+.card-head h2 { margin: 0; font-size: 16.5px; font-weight: 680; line-height: 1.25; color: #1b1b1b; }
+.card-head .credit {
+  font-size: 10.5px; font-weight: 600; color: #aaa; letter-spacing: 0.02em;
+  white-space: nowrap; margin-left: 4px;
 }
+.card-sub { margin: 3px 0 0; font-size: 12.5px; color: #5a5a5a; line-height: 1.4; }
+.card-sub b { color: #2a2a2a; font-weight: 650; }
 .chart { width: 100%; min-width: 0; }
 .chart svg { width: 100%; height: auto; display: block; font-family: var(--font); }
-.insight { margin: 8px 2px 0; font-size: 12px; color: #555; line-height: 1.45; }
+.insight { margin: 9px 2px 0; font-size: 12px; color: #666; line-height: 1.45; font-style: italic; }
 
 /* ---------------- Legends ---------------- */
 .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
@@ -127,11 +143,18 @@ body {
 .size-legend-label { font-size: 9px; fill: var(--muted); }
 
 /* ---------------- Axes (shared) ---------------- */
-.axis text { fill: var(--muted); font-size: 10.5px; }
+.axis text { fill: #5a5a5a; font-size: 11.5px; }
 .axis path, .axis line { stroke: #cfcfcf; }
 .grid line { stroke: var(--line); shape-rendering: crispEdges; }
 .grid path { stroke: none; }
-.axis-title { fill: #555; font-size: 11px; font-weight: 600; }
+.axis-title { fill: #444; font-size: 12px; font-weight: 600; }
+
+/* ---------------- On-chart annotations (state the insight) ---------------- */
+.anno-text {
+  font-size: 11.5px;
+  paint-order: stroke; stroke: #ffffff; stroke-width: 3.2px; stroke-linejoin: round;
+}
+.annotation line { opacity: 0.8; }
 
 /* ---------------- V3 inline controls ---------------- */
 .v3-controls { display: flex; gap: 14px; align-items: center; margin-bottom: 6px; font-size: 12px; }

@@ -39,7 +39,7 @@ This prints a QC report and writes `data/processed/dataset.json` + `meta.json`.
 | ID | Chart | Owner | Q | Interactions |
 |----|-------|-------|---|--------------|
 | **V1** | Animated bubble (GDP/cap × life expectancy, size = population) | A | Q1, Q2 | **Animation** (play/pause/scrub), hover, filter, linked highlight |
-| **V2** | Zoomable sunburst (bloc → GDP tier → mortality tier → country) | A | Q1 | **Click-to-zoom**, hover, click country → link, filter |
+| **V2** | Zoomable **sunburst**, coloured by region (region → income → mortality → country) | A | Q1 | **Click-to-zoom**, hover, click country → link, filter |
 | **V3** | Slope chart (life-expectancy, two chosen years, top 20) | B | Q3 | **Two-year selectors** (filter), hover, linked highlight |
 | **V4** | Choropleth world map (infant mortality) | B | Q2, Q3 | **Wheel-zoom + drag-pan**, hover, click country → link, filter |
 | **V5** | Connected scatterplot (GDP × infant mortality trajectories) | C | Q2 | Hover, current-year dots track the cursor, linked highlight, filter |
@@ -101,7 +101,8 @@ These were resolved against the *real* data and are surfaced here per the handof
 5. **6 macro-regions** (World Bank style) collapsed from the source's 22 UN sub-regions.
 6. **Supplementary fields:** the source has no "child malnutrition" column, so enrichment uses indicators that map directly onto the three SDG-3 targets (under-5 & neonatal mortality, cardiovascular NCD share, plus TB/malaria/maternal and gov. health spend), shown in tooltips.
 7. **Single year cursor + play controls** instead of a literal year-*range* slider (animation and snapshot charts need one current year).
-8. **Sunburst has a 4th "country" ring** so clicking a country there can drive the linked highlight (the proposal described 3 rings).
+8. **V2 is a zoomable sunburst grouped & coloured by *region*** (region → income → child-mortality → country), not by bloc. Grouping by bloc made "Other" a large grey majority; region grouping uses the shared 6-colour key, removes the grey block, and adds a 4th "country" ring so clicking a country drives the linked highlight. (The OECD-vs-OPEC view for Q1 lives in V1 + the header bloc toggle.)
+9. **Storytelling layer.** Chart titles state the takeaway in plain language; a data-driven standfirst summarises the finding; on-chart annotations point at the key insight; and the region colour key lives once in the header (not repeated on every chart).
 
 ---
 
