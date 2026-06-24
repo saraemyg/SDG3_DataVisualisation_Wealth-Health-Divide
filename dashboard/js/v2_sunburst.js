@@ -87,11 +87,20 @@ App.charts.v2 = (function () {
       exit => exit.remove()
     );
 
-    g.selectAll("text.arc-label").data(root.descendants().slice(1).filter(labelVisible), nodeKey).join(
+    // Bind ALL arc nodes (not just labelVisible ones) so the label elements stay in the DOM
+    // across zoom transitions. Visibility is controlled with display:none on small arcs —
+    // this keeps tooltips (which live on the path elements) working for every segment.
+    g.selectAll("text.arc-label").data(root.descendants().slice(1), nodeKey).join(
       enter => enter.append("text").attr("class", "arc-label").attr("dy", "0.32em")
         .attr("text-anchor", "middle").attr("font-size", 9.5).attr("pointer-events", "none")
-        .attr("fill", "#1c1c1c").attr("transform", labelTransform).text(d => trunc(d.data.name, d)),
-      update => update.attr("transform", labelTransform).text(d => trunc(d.data.name, d)),
+        .attr("fill", "#1c1c1c")
+        .attr("display", d => labelVisible(d) ? null : "none")
+        .attr("transform", d => labelVisible(d) ? labelTransform(d) : null)
+        .text(d => trunc(d.data.name, d)),
+      update => update
+        .attr("display", d => labelVisible(d) ? null : "none")
+        .attr("transform", d => labelVisible(d) ? labelTransform(d) : null)
+        .text(d => trunc(d.data.name, d)),
       exit => exit.remove()
     );
 
@@ -121,8 +130,8 @@ App.charts.v2 = (function () {
       .attr("fill-opacity", d => arcVisible(d.target) ? fillOpacity(d) : 0)
       .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none");
     g.selectAll("text.arc-label").transition(t)
-      .attrTween("transform", d => () => labelTransform(d.current))
-      .attr("fill-opacity", d => labelVisible(d.target) ? 1 : 0);
+      .attrTween("transform", d => () => labelVisible(d.current) ? labelTransform(d.current) : null)
+      .attr("display", d => labelVisible(d.target) ? null : "none");
     centerLabel.text(p.depth === 0 ? year : p.data.name);
   }
 

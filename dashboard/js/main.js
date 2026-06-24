@@ -102,10 +102,30 @@
     // --- country search (autocomplete via datalist) ---
     const names = Array.from(S.s.byCountry.keys()).sort(d3.ascending);
     d3.select("#country-list").selectAll("option").data(names).join("option").attr("value", d => d);
-    d3.select("#country-search").on("change", function () {
+    const searchBox = d3.select("#country-search");
+    const searchErr = d3.select("#country-search").node().parentNode
+      ? d3.select("#country-search").node().insertAdjacentHTML("afterend",
+          "<div id='search-error' class='search-error' aria-live='polite'></div>") || d3.select("#search-error")
+      : null;
+
+    function clearSearchError() {
+      searchBox.classed("search-invalid", false);
+      d3.select("#search-error").text("");
+    }
+
+    searchBox.on("input", clearSearchError);
+    searchBox.on("change", function () {
       const v = this.value.trim();
-      if (S.s.byCountry.has(v)) S.selectCountry(v);
-      else if (v === "") S.clearSelection();
+      if (S.s.byCountry.has(v)) {
+        clearSearchError();
+        S.selectCountry(v);
+      } else if (v === "") {
+        clearSearchError();
+        S.clearSelection();
+      } else {
+        searchBox.classed("search-invalid", true);
+        d3.select("#search-error").text("Country not found");
+      }
     });
 
     // --- reset-to-default button ---
@@ -115,6 +135,9 @@
     S.on("select", "header", function (c) {
       updateSelectionReadout(c);
       d3.select("#country-search").property("value", c || "");
+      // clear any error state when selection changes from outside the search box
+      d3.select("#country-search").classed("search-invalid", false);
+      d3.select("#search-error").text("");
     });
   }
 

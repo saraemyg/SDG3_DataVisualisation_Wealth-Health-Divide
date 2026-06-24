@@ -135,7 +135,7 @@ App.charts.v5 = (function () {
         .on("mousemove", (e, d) => App.util.tooltip.show(App.util.countryTooltip(d, yr), e))
         .on("mouseleave", App.util.tooltip.hide)
         .on("click", (e, d) => S.selectCountry(d.country)),
-      update => update.call(u => u.transition().duration(App.config.animStep * 0.9).ease(d3.easeLinear)
+      update => update.call(u => u.transition().duration(App.config.animStep * 0.9).ease(d3.easeCubicOut)
         .attr("cx", d => x(d.gdp_per_capita)).attr("cy", d => y(d.infant_mortality))),
       exit => exit.remove()
     );

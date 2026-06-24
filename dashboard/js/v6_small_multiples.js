@@ -6,8 +6,8 @@
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v6 = (function () {
-  const W = 540, H = 410, OUT = { top: 10, right: 10, bottom: 26, left: 38 };
-  const COLS = 2, GAP = 16;
+  const W = 540, H = 500, OUT = { top: 14, right: 10, bottom: 28, left: 40 };
+  const COLS = 2, GAP = 46;
   const S = App.state;
   let svg, x, y, panelW, panelH, regionSeries;
 

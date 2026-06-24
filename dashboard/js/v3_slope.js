@@ -6,7 +6,7 @@
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v3 = (function () {
-  const W = 480, H = 430, M = { top: 22, right: 138, bottom: 20, left: 56 };
+  const W = 480, H = 430, M = { top: 22, right: 138, bottom: 20, left: 138 };
   const iW = W - M.left - M.right, iH = H - M.top - M.bottom;
   const S = App.state;
   let svg, g, y;
@@ -57,8 +57,9 @@ App.charts.v3 = (function () {
     const xL = 0, xR = iW;
     y = d3.scaleLinear()
       .domain(d3.extent(rows.flatMap(d => [d.valA, d.valB]))).nice().range([iH, 0]);
-    // de-overlap the right-hand country labels (was an unreadable blob at 20 rows)
-    const dodged = App.util.dodge(rows.map(d => y(d.valB)), 13);
+    // de-overlap both endpoint label columns independently
+    const dodgedL = App.util.dodge(rows.map(d => y(d.valA)), 13);
+    const dodged  = App.util.dodge(rows.map(d => y(d.valB)), 13);
 
     g.selectAll("*").remove();
     // axis labels (years)
@@ -69,17 +70,58 @@ App.charts.v3 = (function () {
 
     const grp = g.selectAll("g.slope").data(rows, d => d.country).join("g").attr("class", "slope")
       .style("cursor", "pointer")
-      .on("mousemove", (e, d) => App.util.tooltip.show(tip(d, a, b), e))
-      .on("mouseleave", App.util.tooltip.hide)
+      .on("mouseover", function (e, d) {
+        App.util.tooltip.show(tip(d, a, b), e);
+        // highlight this slope, dim all others
+        g.selectAll("g.slope").each(function (dd) {
+          const isThis = dd.country === d.country;
+          d3.select(this).selectAll("line.slope-line")
+            .attr("stroke-width", isThis ? 3.5 : 1.2)
+            .attr("opacity",      isThis ? 1   : 0.2);
+          d3.select(this).selectAll("circle")
+            .attr("opacity", isThis ? 1 : 0.2);
+          d3.select(this).selectAll("text")
+            .attr("opacity", isThis ? 1 : 0.2);
+          d3.select(this).selectAll("line.connector")
+            .attr("opacity", isThis ? 0.55 : 0.1);
+        });
+      })
+      .on("mousemove", (e) => App.util.tooltip.move(e))
+      .on("mouseleave", function () {
+        App.util.tooltip.hide();
+        // restore all slopes to default appearance
+        g.selectAll("g.slope").each(function () {
+          d3.select(this).selectAll("line.slope-line")
+            .attr("stroke-width", 2).attr("opacity", 0.85);
+          d3.select(this).selectAll("circle").attr("opacity", 1);
+          d3.select(this).selectAll("text").attr("opacity", 1);
+          d3.select(this).selectAll("line.connector").attr("opacity", 0.55);
+        });
+      })
       .on("click", (e, d) => S.selectCountry(d.country));
 
-    grp.append("line").attr("x1", xL).attr("x2", xR)
+    // main slope line (classed so hover handlers can target it precisely)
+    grp.append("line").attr("class", "slope-line")
+      .attr("x1", xL).attr("x2", xR)
       .attr("y1", d => y(d.valA)).attr("y2", d => y(d.valB))
       .attr("stroke", d => App.scales.region(d.region)).attr("stroke-width", 2).attr("opacity", 0.85);
     grp.append("circle").attr("cx", xL).attr("cy", d => y(d.valA)).attr("r", 3).attr("fill", d => App.scales.region(d.region));
     grp.append("circle").attr("cx", xR).attr("cy", d => y(d.valB)).attr("r", 3).attr("fill", d => App.scales.region(d.region));
+
+    // --- LEFT-SIDE LABELS (year A) ---
+    // thin connector from left endpoint to dodged label position
+    grp.append("line").attr("class", "connector")
+      .attr("x1", xL).attr("y1", d => y(d.valA))
+      .attr("x2", xL - 6).attr("y2", (d, i) => dodgedL[i])
+      .attr("stroke", d => App.scales.region(d.region)).attr("stroke-width", 0.6).attr("opacity", 0.55);
+    grp.append("text").attr("x", xL - 9).attr("y", (d, i) => dodgedL[i]).attr("dy", "0.32em")
+      .attr("text-anchor", "end")
+      .attr("font-size", 10.5).attr("fill", "#333").text(d => `${d.valA.toFixed(0)} ${shortName(d.country)}`);
+
+    // --- RIGHT-SIDE LABELS (year B) ---
     // thin connector from the endpoint to the dodged label position
-    grp.append("line").attr("x1", xR).attr("y1", d => y(d.valB))
+    grp.append("line").attr("class", "connector")
+      .attr("x1", xR).attr("y1", d => y(d.valB))
       .attr("x2", xR + 6).attr("y2", (d, i) => dodged[i])
       .attr("stroke", d => App.scales.region(d.region)).attr("stroke-width", 0.6).attr("opacity", 0.55);
     grp.append("text").attr("x", xR + 9).attr("y", (d, i) => dodged[i]).attr("dy", "0.32em")

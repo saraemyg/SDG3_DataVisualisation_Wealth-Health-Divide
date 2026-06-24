@@ -49,30 +49,10 @@ App.charts.v4 = (function () {
         const d = byIso.get(f.id);
         return (d && d.infant_mortality != null) ? App.scales.infantColor(d.infant_mortality) : "#e9e9e9";
       });
-    drawAnnotation();
     applyHighlight(S.s.selectedCountry);
     setInsight(year);
   }
 
-  // label the worst region directly on the map so the eye goes there first
-  function drawAnnotation() {
-    gMap.selectAll(".annotation").remove();
-    const vals = Array.from(byIso.values()).filter(d => d.infant_mortality != null);
-    if (!vals.length) return;
-    const byRegion = d3.rollup(vals, v => d3.mean(v, d => d.infant_mortality), d => d.region);
-    let worst = null, worstVal = -1;
-    byRegion.forEach((m, r) => { if (m > worstVal) { worstVal = m; worst = r; } });
-    const pts = [];
-    features.forEach(f => {
-      const d = byIso.get(f.id);
-      if (d && d.region === worst) { const c = path.centroid(f); if (c[0] === c[0]) pts.push(c); }
-    });
-    if (!pts.length) return;
-    App.util.annotate(gMap, {
-      x: d3.mean(pts, p => p[0]), y: d3.mean(pts, p => p[1]), anchor: "middle",
-      text: ["Highest child mortality"], color: "#6a1b9a"
-    });
-  }
 
   function onHover(e, f) {
     const d = byIso.get(f.id);

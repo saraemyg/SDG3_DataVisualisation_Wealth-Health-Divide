@@ -41,7 +41,7 @@ App.config = {
   mutedText: "#777777",
   highlightStroke: "#111111",
 
-  transition: 600,   // ms for filter/redraw transitions
+  transition: 300,   // ms for filter/redraw transitions (capped for snappy scrubbing)
   animStep: 320,     // ms per year during V1 playback
 
   // human-readable labels for tooltips / legends

@@ -77,7 +77,7 @@ App.charts.v1 = (function () {
         .on("mouseleave", App.util.tooltip.hide)
         .on("click", (e, d) => S.selectCountry(d.country))
         .call(en => en.transition().duration(dur).attr("r", d => r(d.population))),
-      update => update.call(up => up.transition().duration(dur).ease(d3.easeLinear)
+      update => update.call(up => up.transition().duration(dur).ease(playing ? d3.easeLinear : d3.easeCubicOut)
         .attr("cx", d => x(d.gdp_per_capita)).attr("cy", d => y(d.life_expectancy))
         .attr("r", d => r(d.population))),
       exit => exit.call(ex => ex.transition().duration(dur).attr("r", 0).remove())
