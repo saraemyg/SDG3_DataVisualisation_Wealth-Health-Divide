@@ -10,15 +10,15 @@
   <script src="vendor/topojson-client.min.js"></script>
 </head>
 <body>
-  <!-- ===================== HEADER (controls affect all 6 charts) ===================== -->
+  <!-- ===================== HEADER (compact — controls affect all 6 charts) ===================== -->
   <header class="app-header">
-    <div class="title-block">
-      <h1>The Wealth–Health Divide <span class="subtitle">Does money buy survival?</span></h1>
-      <p class="tagline">SDG 3 — Good Health &amp; Well-being · 185 countries · 1960–2011 · built with D3</p>
+    <div class="header-top">
+      <div class="title-block">
+        <h1>The Wealth–Health Divide <span class="subtitle">Does money buy survival?</span></h1>
+        <p class="tagline">SDG 3 — Good Health &amp; Well-being · 185 countries · 1960–2011 · D3.js</p>
+      </div>
+      <p class="standfirst" id="standfirst">Loading the data…</p>
     </div>
-
-    <!-- one-line plain-language finding, filled with real numbers by main.js -->
-    <p class="standfirst" id="standfirst">Loading the data…</p>
 
     <div class="controls">
       <div class="control year-control">
@@ -29,128 +29,117 @@
           <output id="year-label">—</output>
         </div>
       </div>
-
       <div class="control">
         <label>Economic bloc</label>
         <div id="bloc-toggle" class="seg"></div>
       </div>
-
       <div class="control region-control">
         <label>Regions <span class="hint">colour key — click to filter</span></label>
         <div id="region-chips" class="chips"></div>
       </div>
-
       <div class="control selection-control">
-        <label>Spotlighted country</label>
-        <input id="country-search" class="country-search" list="country-list" placeholder="🔍 search a country…" autocomplete="off" />
+        <label>Spotlight a country</label>
+        <input id="country-search" class="country-search" list="country-list" placeholder="🔍 search…" autocomplete="off" />
         <datalist id="country-list"></datalist>
         <div id="selection-readout" class="selection">none — click any country</div>
       </div>
-
       <div class="control reset-control">
         <label>&nbsp;</label>
-        <button id="reset-btn" class="reset-btn" title="Clear the year, filters and selection back to defaults">↺ Reset all</button>
+        <button id="reset-btn" class="reset-btn" title="Clear year, filters and selection">↺ Reset</button>
       </div>
-    </div>
-
-    <div class="how-to" id="how-to">
-      <span><b>Hover</b> any mark for exact numbers</span>
-      <span><b>Drag the year</b> (or press ▶) to move through time</span>
-      <span><b>Click a country</b> to spotlight it in every chart</span>
+      <div class="how-to">
+        <span><b>Hover</b> for numbers</span>
+        <span><b>Click</b> a country to spotlight it everywhere</span>
+        <span><b>⤢</b> expand any chart</span>
+      </div>
     </div>
   </header>
 
-  <!-- ===================== DASHBOARD (3 plain-language sections) ===================== -->
-  <main class="dashboard">
-    <!-- SECTION 1 -->
-    <div class="zone">
-      <div class="zone-label">Start with the big picture — every country's wealth &amp; lifespan, in motion</div>
-      <div class="row row-2-1">
-        <section class="card" id="card-v1">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Richer countries live longer</h2>
-              <p class="card-sub">Each bubble is a country — <b>→ richer</b>, <b>↑ longer-lived</b>, size = population, colour = region. Press ▶ to watch 1960→2011.</p>
-            </div>
-            <div class="legend" id="legend-v1"></div>
-          </div>
-          <div class="chart" id="v1"></div>
-          <p class="insight" id="insight-v1"></p>
-        </section>
-        <section class="card" id="card-v2">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Where the world's people sit, by region, wealth &amp; child survival</h2>
-              <p class="card-sub">Rings out from the centre: <b>region → income tier → child-mortality tier → country</b>. Wedge size = population. Click to zoom in.</p>
-            </div>
-            <div class="legend" id="legend-v2"></div>
-          </div>
-          <div class="v2-controls" id="v2-controls"></div>
-          <div class="chart" id="v2"></div>
-          <p class="insight" id="insight-v2"></p>
-        </section>
+  <!-- ===================== FULLSCREEN OVERVIEW GRID (all 6 at a glance) ===================== -->
+  <main class="dashboard" id="dashboard">
+    <section class="card" id="card-v1">
+      <button class="expand-btn" data-card="v1" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>Richer countries live longer</h2>
+          <p class="card-sub">Each bubble a country — <b>→ richer</b>, <b>↑ longer-lived</b>, size = population. Press ▶ to play 1960→2011.</p>
+        </div>
+        <div class="legend" id="legend-v1"></div>
       </div>
-    </div>
+      <div class="chart" id="v1"></div>
+      <p class="insight" id="insight-v1"></p>
+    </section>
 
-    <!-- SECTION 2 -->
-    <div class="zone">
-      <div class="zone-label">Now explore — where children still die youngest, and who climbed fastest</div>
-      <div class="row row-1-1">
-        <section class="card" id="card-v4">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Where children still die youngest</h2>
-              <p class="card-sub">Colour = infant deaths per 1,000 births in the chosen year. Scroll to zoom, drag to pan, click a country.</p>
-            </div>
-            <div class="legend" id="legend-v4"></div>
-          </div>
-          <div class="chart" id="v4"></div>
-          <p class="insight" id="insight-v4"></p>
-        </section>
-        <section class="card" id="card-v3">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Which countries gained the most years of life?</h2>
-              <p class="card-sub">Life expectancy in two years you choose — <b>steeper line = bigger change</b>.</p>
-            </div>
-            <div class="legend" id="legend-v3"></div>
-          </div>
-          <div class="v3-controls" id="v3-controls"></div>
-          <div class="chart" id="v3"></div>
-          <p class="insight" id="insight-v3"></p>
-        </section>
+    <section class="card" id="card-v2">
+      <button class="expand-btn" data-card="v2" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>Is the health gap closing?</h2>
+          <p class="card-sub">Each line = a bloc's median over time. Are wealthy <b>OECD</b> &amp; oil-exporting <b>OPEC</b> converging?</p>
+        </div>
+        <div class="legend" id="legend-v2"></div>
       </div>
-    </div>
+      <div class="v2-controls" id="v2-controls"></div>
+      <div class="chart" id="v2"></div>
+      <p class="insight" id="insight-v2"></p>
+    </section>
 
-    <!-- SECTION 3 -->
-    <div class="zone">
-      <div class="zone-label">The bottom line — does money buy survival, and is the gap closing?</div>
-      <div class="row row-1-1">
-        <section class="card" id="card-v5">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Money buys survival — up to a point</h2>
-              <p class="card-sub">Each thread is a country's path as it grew richer (<b>→</b>). Child deaths fall steeply, then flatten past the line.</p>
-            </div>
-            <div class="legend" id="legend-v5"></div>
-          </div>
-          <div class="chart" id="v5"></div>
-          <p class="insight" id="insight-v5"></p>
-        </section>
-        <section class="card" id="card-v6">
-          <div class="card-head">
-            <div class="card-titles">
-              <h2>Are regions converging on long lives?</h2>
-              <p class="card-sub">Life-expectancy spread within each region over time — <b>narrowing band = countries converging</b>.</p>
-            </div>
-            <div class="legend" id="legend-v6"></div>
-          </div>
-          <div class="chart" id="v6"></div>
-          <p class="insight" id="insight-v6"></p>
-        </section>
+    <section class="card" id="card-v3">
+      <button class="expand-btn" data-card="v3" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>What drives a longer life?</h2>
+          <p class="card-sub">How strongly each factor tracks life expectancy this year. <b>Correlation, not proof of cause.</b></p>
+        </div>
+        <div class="legend" id="legend-v3"></div>
       </div>
-    </div>
+      <div class="chart" id="v3"></div>
+      <p class="insight" id="insight-v3"></p>
+    </section>
+
+    <section class="card" id="card-v4">
+      <button class="expand-btn" data-card="v4" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>Where children still die youngest</h2>
+          <p class="card-sub">Colour = infant deaths per 1,000 births. Scroll to zoom, drag to pan, click a country.</p>
+        </div>
+        <div class="legend" id="legend-v4"></div>
+      </div>
+      <div class="chart" id="v4"></div>
+      <p class="insight" id="insight-v4"></p>
+    </section>
+
+    <section class="card" id="card-v5">
+      <button class="expand-btn" data-card="v5" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>Does money buy survival?</h2>
+          <p class="card-sub">Each dot a country — child deaths vs income. They fall steeply, then flatten past the line.</p>
+        </div>
+        <div class="legend" id="legend-v5"></div>
+      </div>
+      <div class="chart" id="v5"></div>
+      <p class="insight" id="insight-v5"></p>
+    </section>
+
+    <section class="card" id="card-v6">
+      <button class="expand-btn" data-card="v6" title="Expand / collapse">⤢</button>
+      <div class="card-head">
+        <div class="card-titles">
+          <h2>Are regions converging on long lives?</h2>
+          <p class="card-sub">Median life expectancy per region. <b>Lines drifting together = convergence.</b></p>
+        </div>
+        <div class="legend" id="legend-v6"></div>
+      </div>
+      <div class="v6-controls" id="v6-controls"></div>
+      <div class="chart" id="v6"></div>
+      <p class="insight" id="insight-v6"></p>
+    </section>
   </main>
+
+  <!-- backdrop shown behind an expanded chart -->
+  <div class="focus-backdrop" id="focus-backdrop"></div>
 
   <footer class="app-footer">
     <span id="footer-meta">CDS6324 Data Visualization · TT2L · SDG 3 · D3.js v7</span>
@@ -163,10 +152,10 @@
   <script src="js/scales.js"></script>
   <script src="js/data.js"></script>
   <script src="js/v1_bubble.js"></script>
-  <script src="js/v2_sunburst.js"></script>
-  <script src="js/v3_slope.js"></script>
+  <script src="js/v2_gap_line.js"></script>
+  <script src="js/v3_drivers.js"></script>
   <script src="js/v4_choropleth.js"></script>
-  <script src="js/v5_connected_scatter.js"></script>
+  <script src="js/v5_threshold_scatter.js"></script>
   <script src="js/v6_small_multiples.js"></script>
   <script src="js/main.js"></script>
 </body>

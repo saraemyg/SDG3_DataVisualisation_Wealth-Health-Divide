@@ -29,8 +29,9 @@ App.charts.v1 = (function () {
       .attr("x", iW - 6).attr("y", iH - 8).attr("text-anchor", "end")
       .attr("font-size", 76).attr("font-weight", 700).attr("fill", "#f0f0f0");
 
-    // axes — label a clean 1-2-5 sequence so the log ticks don't pile up illegibly
-    const xticks = [200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+    // axes — only a few decade ticks so the log labels never pile up (readable even when the
+    // tile is shrunk to grid size). Each gridline is ×5 the previous.
+    const xticks = [200, 1000, 5000, 20000, 100000]
       .filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
     g.append("g").attr("class", "axis x-axis").attr("transform", `translate(0,${iH})`)
       .call(d3.axisBottom(x).tickValues(xticks).tickFormat(d => "$" + d3.format("~s")(d)));
@@ -71,7 +72,7 @@ App.charts.v1 = (function () {
         .attr("cx", d => x(d.gdp_per_capita)).attr("cy", d => y(d.life_expectancy))
         .attr("r", 0)
         .attr("fill", d => App.scales.region(d.region))
-        .attr("fill-opacity", 0.72).attr("stroke", "#fff").attr("stroke-width", 0.6)
+        .attr("fill-opacity", 0.66).attr("stroke", "#fff").attr("stroke-width", 0.7)
         .style("cursor", "pointer")
         .on("mousemove", (e, d) => App.util.tooltip.show(App.util.countryTooltip(d, year), e))
         .on("mouseleave", App.util.tooltip.hide)

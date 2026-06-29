@@ -14,7 +14,9 @@
 }
 
 * { box-sizing: border-box; }
+html, body { height: 100%; }
 
+/* full-height app: header (auto) + grid (fills) + slim footer — no page scroll */
 body {
   margin: 0;
   font-family: var(--font);
@@ -22,39 +24,42 @@ body {
   background: var(--shell);
   font-size: 14px;
   line-height: 1.4;
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
 }
 
-/* ---------------- Header ---------------- */
+/* ---------------- Header (compact) ---------------- */
 .app-header {
-  position: sticky; top: 0; z-index: 50;
+  flex: none;
   background: #fff;
   border-bottom: 1px solid var(--line);
-  padding: 12px 20px;
+  padding: 8px 16px 9px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
-.title-block h1 { margin: 0; font-size: 22px; font-weight: 680; }
-.title-block .subtitle { font-weight: 400; color: var(--muted); font-size: 16px; }
-.title-block .tagline { margin: 2px 0 8px; color: var(--muted); font-size: 12.5px; }
+.header-top { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.title-block h1 { margin: 0; font-size: 18.5px; font-weight: 680; }
+.title-block .subtitle { font-weight: 400; color: var(--muted); font-size: 14px; }
+.title-block .tagline { margin: 1px 0 0; color: var(--muted); font-size: 11.5px; }
 
 /* standfirst — the plain-language headline finding (filled with real numbers by main.js) */
 .standfirst {
-  margin: 0 0 12px; font-size: 14.5px; line-height: 1.5; color: #2a2a2a;
-  border-left: 3px solid var(--accent); padding: 8px 14px; background: #f6fafd; border-radius: 0 4px 4px 0;
+  flex: 1 1 420px; margin: 0; font-size: 12.5px; line-height: 1.4; color: #2a2a2a;
+  border-left: 3px solid var(--accent); padding: 5px 12px; background: #f6fafd; border-radius: 0 4px 4px 0;
 }
 .standfirst b { color: var(--accent); }
 
-/* how-to strip — three affordance hints */
-.how-to { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+/* how-to hints — inline at the end of the controls row */
+.how-to { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--muted); align-items: center; margin-left: auto; }
 .how-to span { display: inline-flex; align-items: center; gap: 5px; }
 .how-to span::before { content: "→"; color: var(--accent); font-weight: 700; }
 .how-to b { color: var(--ink); font-weight: 600; }
 
 .controls {
-  display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;
+  display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 7px;
 }
 .control label {
-  display: block; font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.04em; color: var(--muted); margin-bottom: 5px; font-weight: 600;
+  display: block; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--muted); margin-bottom: 3px; font-weight: 600;
 }
 .control .hint { text-transform: none; font-weight: 400; letter-spacing: 0; }
 
@@ -118,9 +123,9 @@ body {
 }
 .info-badge:hover { background: #005a8f; }
 
-/* V2 "colour by" toggle (mini segmented control inside the card) */
-.v2-controls { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
-.v2-controls .v2-label { color: var(--muted); }
+/* in-card mini toggles (V2 outcome, V6 combined/separate) */
+.v2-controls, .v6-controls { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px; flex: none; }
+.v2-controls .v2-label, .v6-controls .v2-label { color: var(--muted); }
 .seg-mini { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .seg-mini button {
   border: none; background: #fff; padding: 4px 10px; cursor: pointer; font-size: 12px;
@@ -129,42 +134,65 @@ body {
 .seg-mini button:last-child { border-right: none; }
 .seg-mini button.active { background: var(--accent); color: #fff; font-weight: 600; }
 
-/* ---------------- Dashboard layout (flex column of 3 narrative zones) ---------------- */
+/* ---------------- Fullscreen overview grid (all 6 charts, no page scroll) ---------------- */
 .dashboard {
-  display: flex; flex-direction: column; gap: 14px;
-  padding: 16px 16px 28px;
-  max-width: min(96vw, 1840px); margin: 0 auto;
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px; padding: 10px 12px;
 }
-.zone { display: flex; flex-direction: column; gap: 6px; }
-.zone-label {
-  font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--muted);
-}
-.row { display: grid; gap: 16px; align-items: stretch; }
-.row-2-1 { grid-template-columns: 1.8fr 1fr; }  /* big picture: bubble + roomy sunburst */
-.row-1-1 { grid-template-columns: 1fr 1fr; }   /* Engage & Punchline: equal halves */
-
 .card {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px 14px 14px;
+  padding: 9px 11px 9px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   display: flex; flex-direction: column;
-  min-width: 0;
+  min-width: 0; min-height: 0;
+  overflow: hidden;
 }
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px 16px; margin-bottom: 10px; flex-wrap: wrap; }
-.card-titles { flex: 1 1 260px; min-width: 0; }
-.card-head h2 { margin: 0; font-size: 16.5px; font-weight: 680; line-height: 1.25; color: #1b1b1b; }
-.card-head .credit {
-  font-size: 10.5px; font-weight: 600; color: #aaa; letter-spacing: 0.02em;
-  white-space: nowrap; margin-left: 4px;
-}
-.card-sub { margin: 3px 0 0; font-size: 12.5px; color: #5a5a5a; line-height: 1.4; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px 14px; margin-bottom: 4px; flex-wrap: wrap; flex: none; }
+.card-titles { flex: 1 1 200px; min-width: 0; }
+.card-head h2 { margin: 0; font-size: 14.5px; font-weight: 680; line-height: 1.2; color: #1b1b1b; }
+.card-sub { margin: 2px 0 0; font-size: 11.5px; color: #5a5a5a; line-height: 1.35; }
 .card-sub b { color: #2a2a2a; font-weight: 650; }
-.chart { width: 100%; min-width: 0; }
-.chart svg { width: 100%; height: auto; display: block; font-family: var(--font); }
-.insight { margin: 9px 2px 0; font-size: 12px; color: #666; line-height: 1.45; font-style: italic; }
+
+/* the chart fills all remaining card height; SVGs use viewBox + meet so they scale to fit */
+.chart { flex: 1; min-height: 0; width: 100%; }
+.chart svg { width: 100%; height: 100%; display: block; font-family: var(--font); }
+.insight { margin: 5px 2px 0; font-size: 11.5px; color: #666; line-height: 1.4; font-style: italic; flex: none; }
+
+/* expand / collapse button (top-right of every card) */
+.expand-btn {
+  position: absolute; top: 6px; right: 6px; z-index: 5;
+  width: 24px; height: 24px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--line); background: rgba(255,255,255,0.9); color: #555;
+  font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------------- Compact mini-tiles: show only headline + chart ---------------- */
+/* (the region colour key + how-to live in the header, so mini tiles stay clean) */
+.card:not(.focused) .card-sub,
+.card:not(.focused) .legend,
+.card:not(.focused) .insight { display: none; }
+
+/* ---------------- Focus / expand: one chart takes over the screen ---------------- */
+.focus-backdrop {
+  position: fixed; inset: 0; background: rgba(20,20,20,0.45);
+  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+body.has-focus .focus-backdrop { opacity: 1; pointer-events: auto; }
+.card.focused {
+  position: fixed; inset: 4vh 5vw; z-index: 110; margin: 0;
+  padding: 16px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.card.focused .card-head h2 { font-size: 19px; }
+.card.focused .card-sub { font-size: 13px; }
+.card.focused .insight { font-size: 12.5px; }
+.card.focused .expand-btn { width: 28px; height: 28px; font-size: 15px; }
 
 /* ---------------- Legends ---------------- */
 .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
@@ -216,12 +244,17 @@ body {
 .tooltip td:first-child { color: var(--muted); padding-right: 12px; }
 .tooltip td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 
-/* ---------------- Footer ---------------- */
-.app-footer { padding: 14px 20px 26px; color: var(--muted); font-size: 11.5px; text-align: center; }
+/* ---------------- Footer (slim) ---------------- */
+.app-footer { flex: none; padding: 4px 16px 5px; color: var(--muted); font-size: 11px; text-align: center; border-top: 1px solid var(--line); background: #fff; }
 
 /* ---------------- Responsive ---------------- */
-@media (max-width: 980px) {
-  .row-2-1, .row-1-1 { grid-template-columns: 1fr; }
+/* on smaller / shorter screens, relax the no-scroll fullscreen grid into a scrollable one */
+@media (max-width: 1100px), (max-height: 620px) {
+  body { height: auto; overflow: auto; }
+  .dashboard { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(300px, 46vh); }
+}
+@media (max-width: 720px) {
+  .dashboard { grid-template-columns: 1fr; }
 }
 
 .loading { padding: 40px; text-align: center; color: var(--muted); }

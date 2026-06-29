@@ -36,9 +36,6 @@ App.data = (function () {
     s.blocFilter = "All";
     s.activeRegions = new Set(meta.regions);
     s.selectedCountry = null;
-    // sensible default comparison years for the slope chart (V3)
-    s.slopeYearA = Math.max(meta.yearMin, 1965);
-    s.slopeYearB = meta.yearMax;
 
     // list of years actually present, ascending
     s.years = Array.from(s.byYear.keys()).sort((a, b) => a - b);

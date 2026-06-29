@@ -21,6 +21,7 @@
 
     buildHeader(bundle.meta);
     mountCharts();
+    setupFocus();
     updateSelectionReadout(null);
     buildStandfirst(bundle.meta);
     document.getElementById("footer-meta").textContent =
@@ -151,12 +152,26 @@
     S.setRegions(new Set(meta.regions));
     d3.select("#region-chips").selectAll(".chip").classed("off", false);
     S.setYear(meta.yearMax);
-    const a = Math.max(meta.yearMin, 1965);
-    S.setSlopeYears(a, meta.yearMax);
-    d3.select("#v3-sel-a").property("value", a);
-    d3.select("#v3-sel-b").property("value", meta.yearMax);
-    if (App.charts.v2 && App.charts.v2.setMode) App.charts.v2.setMode("region");
     d3.select("#country-search").property("value", "");
+  }
+
+  /* ----------------------------- focus / expand controller ----------------------------- */
+  /* overview first, details on demand: each ⤢ button blows one chart up to a full-screen
+   * overlay (charts use viewBox, so they just scale — no re-render needed). Esc / backdrop closes. */
+  function setupFocus() {
+    function close() {
+      document.querySelectorAll(".card.focused").forEach(c => c.classList.remove("focused"));
+      document.body.classList.remove("has-focus");
+    }
+    d3.selectAll(".expand-btn").on("click", function (e) {
+      e.stopPropagation();
+      const card = document.getElementById("card-" + this.dataset.card);
+      const wasOpen = card.classList.contains("focused");
+      close();
+      if (!wasOpen) { card.classList.add("focused"); document.body.classList.add("has-focus"); }
+    });
+    d3.select("#focus-backdrop").on("click", close);
+    d3.select("body").on("keydown.focus", e => { if (e.key === "Escape") close(); });
   }
 
   function updateSelectionReadout(country) {

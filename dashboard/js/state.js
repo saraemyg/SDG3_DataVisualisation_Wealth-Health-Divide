@@ -9,12 +9,11 @@
  *   "year"   currentYear changed (animation tick or slider scrub)
  *   "filter" blocFilter or active regions changed
  *   "select" selectedCountry changed (linked highlight across charts)
- *   "slope"  V3's two comparison years changed
  */
 window.App = window.App || {};
 
 App.state = (function () {
-  const dispatch = d3.dispatch("year", "filter", "select", "slope");
+  const dispatch = d3.dispatch("year", "filter", "select");
 
   const s = {
     data: [],            // all records (set by data.js)
@@ -25,9 +24,7 @@ App.state = (function () {
     currentYear: null,
     blocFilter: "All",   // "All" | "OECD" | "OPEC" | "Other"
     activeRegions: null, // Set<region>; null until initialised = all regions
-    selectedCountry: null,
-    slopeYearA: null,
-    slopeYearB: null
+    selectedCountry: null
   };
 
   /* subscribe: namespaced so multiple charts can listen to the same event */
@@ -63,10 +60,6 @@ App.state = (function () {
     s.selectedCountry = null;
     dispatch.call("select", null, null);
   }
-  function setSlopeYears(a, b) {
-    s.slopeYearA = a; s.slopeYearB = b;
-    dispatch.call("slope", null);
-  }
 
   /* --- shared filter predicate (bloc + region) used by every chart --- */
   function passFilter(d) {
@@ -83,7 +76,7 @@ App.state = (function () {
 
   return {
     s, on, dispatch,
-    setYear, setBloc, setRegions, toggleRegion, selectCountry, clearSelection, setSlopeYears,
+    setYear, setBloc, setRegions, toggleRegion, selectCountry, clearSelection,
     passFilter, yearData
   };
 })();

@@ -33,6 +33,21 @@ App.config = {
   // sequential ramp used for the choropleth (V4)
   sequentialInterpolator: "interpolateYlOrRd",
 
+  // diverging colours for the "What drives health?" bars (V3)
+  goodColor: "#1a9850",   // factor goes WITH a longer life (positive correlation)
+  badColor: "#d73027",    // factor goes WITH a shorter life (negative correlation)
+
+  // factors correlated against the health outcome in V3 (key -> plain label).
+  // (Outcome metrics like under-5 / neonatal mortality are excluded — they ARE the outcome.)
+  drivers: [
+    { key: "gdp_per_capita", label: "GDP per person" },
+    { key: "health_expenditure", label: "Health spending" },
+    { key: "fertility", label: "Fertility rate" },
+    { key: "tb_incidence", label: "TB cases" },
+    { key: "malaria_incidence", label: "Malaria cases" },
+    { key: "maternal_mortality", label: "Maternal deaths" }
+  ],
+
   font: "'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif",
   neutralBg: "#ffffff",
   axisColor: "#6b6b6b",

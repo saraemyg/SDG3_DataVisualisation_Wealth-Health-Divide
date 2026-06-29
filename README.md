@@ -34,23 +34,27 @@ This prints a QC report and writes `data/processed/dataset.json` + `meta.json`.
 
 ---
 
-## The six visualizations
+## Layout — a fullscreen, overview-first dashboard
+
+The six charts sit in a **3×2 grid that fills one screen** (no scrolling) — "overview first" (Shneiderman). Each tile shows only its headline + chart; the **⤢ button expands any chart** to a full-screen focus view with axes, legend and insight ("details on demand"). The header carries the controls that drive all six: a year cursor with **play**, an **OECD/OPEC/All** toggle, a **region** colour-key/filter, and a country **search/spotlight**.
+
+## The six visualizations (health-forward redesign)
 
 | ID | Chart | Owner | Q | Interactions |
 |----|-------|-------|---|--------------|
-| **V1** | Animated bubble (GDP/cap × life expectancy, size = population) | A | Q1, Q2 | **Animation** (play/pause/scrub), hover, filter, linked highlight |
-| **V2** | Zoomable **sunburst**, coloured by region (region → income → mortality → country) | A | Q1 | **Click-to-zoom**, hover, click country → link, filter |
-| **V3** | Slope chart (life-expectancy, two chosen years, top 20) | B | Q3 | **Two-year selectors** (filter), hover, linked highlight |
-| **V4** | Choropleth world map (infant mortality) | B | Q2, Q3 | **Wheel-zoom + drag-pan**, hover, click country → link, filter |
-| **V5** | Connected scatterplot (GDP × infant mortality trajectories) | C | Q2 | Hover, current-year dots track the cursor, linked highlight, filter |
-| **V6** | Small multiples area (life-expectancy spread per region) | C | Q3 | Hover, current-year guide, selected country overlay, filter |
+| **V1** | Animated bubble (GDP/cap × life expectancy, size = population) | A | Q1, Q2 | **Animation** (play/pause/scrub), hover, filter, linked highlight, expand |
+| **V2** | **"Is the health gap closing?"** — OECD vs OPEC vs Other median lines over time | A | Q1 | **Life-expectancy ↔ child-mortality toggle**, hover-guide, year cursor, linked overlay |
+| **V3** | **"What drives a longer life?"** — diverging bars of each factor's correlation with life expectancy | B | Q2 | Hover (n + r), updates with year/filters |
+| **V4** | Choropleth world map (child mortality) | B | Q2, Q3 | **Wheel-zoom + drag-pan**, hover, click country → link, filter |
+| **V5** | **"Does money buy survival?"** — one-year GDP × child-mortality scatter, threshold line + trend curve | C | Q2 | Hover, current-year dots track the cursor, linked highlight, filter |
+| **V6** | **"Are regions converging?"** — combined region median lines, **toggle → 6 small-multiple panels** | C | Q3 | **Combined/By-region toggle**, year guide, selected-country overlay, filter |
 
 ### The five mandatory interactivity types (assignment §3.5)
 - **Hover tooltips** — every chart, exact values + supplementary indicators.
-- **Filtering** — header year cursor, OECD/OPEC/All toggle, region multi-select; plus V3's two-year selectors.
-- **Zoom / pan** — V4 (map wheel-zoom + pan) and V2 (click-to-zoom into the sunburst).
-- **Linked interactions** — clicking a country in **V4** or **V2** highlights it in **V1, V5, V6** (and dims the rest); header filters update all six simultaneously.
-- **Animation** — V1 plays through the years; bubbles are keyed and tween between frames (interactive, data-driven — Tversky congruence).
+- **Filtering** — header year cursor, OECD/OPEC/All toggle, region multi-select; plus V2's outcome toggle and V6's combined/by-region toggle.
+- **Zoom / pan** — V4 (map wheel-zoom + pan); the expand/focus view enlarges any chart to full screen.
+- **Linked interactions** — clicking a country in **V4**, **V1** or **V5** highlights it in **V1, V5, V2, V6** (and dims the rest); header filters update all six simultaneously.
+- **Animation** — V1 plays through the years (keyed, tweened bubbles); the V2/V5/V6 year-guides move with it (Tversky congruence).
 
 ---
 
@@ -65,18 +69,19 @@ preprocessing/
   country_lookup.py  OECD/OPEC membership, 6-region canon map, name normalisation
   iso_map.py      embedded name → ISO code map (pre-generated; no runtime dependency)
 dashboard/
-  index.html      single-page app (CSS-grid, 3 narrative zones)
+  index.html      single-page app (fullscreen CSS-grid + expand/focus overlay)
   css/style.css   one shared typographic + colour system
   vendor/         d3.v7.min.js, topojson-client.min.js  (offline-safe)
   js/
     config.js  util.js  state.js  scales.js  data.js   (shared foundation)
-    v1_bubble.js … v6_small_multiples.js                (one file per chart)
-    main.js     loads data, wires header → state, mounts the six charts
+    v1_bubble.js  v2_gap_line.js  v3_drivers.js
+    v4_choropleth.js  v5_threshold_scatter.js  v6_small_multiples.js   (one file per chart)
+    main.js     loads data, wires header → state, mounts the six charts, owns the focus/expand controller
 docs/             governing artifacts (assignment, proposal, rubrics, handoff)
 plan.md           the approved implementation plan
 ```
 
-The dashboard is a **coordinated** dashboard: a single shared store (`state.js`) holds the year cursor, filters, and selection, and broadcasts typed events (`year` / `filter` / `select` / `slope`) that each chart subscribes to. Encodings (the region colour scale, the sequential severity scale, the GDP/population scales) are defined **once** in `scales.js` and imported everywhere, so a country is the same colour in all six views.
+The dashboard is a **coordinated** dashboard: a single shared store (`state.js`) holds the year cursor, filters, and selection, and broadcasts typed events (`year` / `filter` / `select`) that each chart subscribes to. Encodings (the region colour scale, the sequential severity scale, the GDP/population scales) are defined **once** in `scales.js` and imported everywhere, so a country is the same colour in all six views.
 
 ---
 
@@ -101,8 +106,15 @@ These were resolved against the *real* data and are surfaced here per the handof
 5. **6 macro-regions** (World Bank style) collapsed from the source's 22 UN sub-regions.
 6. **Supplementary fields:** the source has no "child malnutrition" column, so enrichment uses indicators that map directly onto the three SDG-3 targets (under-5 & neonatal mortality, cardiovascular NCD share, plus TB/malaria/maternal and gov. health spend), shown in tooltips.
 7. **Single year cursor + play controls** instead of a literal year-*range* slider (animation and snapshot charts need one current year).
-8. **V2 is a zoomable sunburst grouped & coloured by *region*** (region → income → child-mortality → country), not by bloc. Grouping by bloc made "Other" a large grey majority; region grouping uses the shared 6-colour key, removes the grey block, and adds a 4th "country" ring so clicking a country drives the linked highlight. (The OECD-vs-OPEC view for Q1 lives in V1 + the header bloc toggle.)
-9. **Storytelling layer.** Chart titles state the takeaway in plain language; a data-driven standfirst summarises the finding; on-chart annotations point at the key insight; and the region colour key lives once in the header (not repeated on every chart).
+8. **Health-forward chart redesign** (after a beginner-usability review). Three charts from the proposal were replaced with simpler, health-led ones, because they were hard for a non-expert to read (sunburst = abstract nested rings; slope = overlapping labels; connected scatter = empirically the slowest/most error-prone common chart):
+   - **V2 sunburst → "Is the health gap closing?"** OECD/OPEC/Other median life-expectancy (or child-mortality) lines over time — answers Q1 far more directly.
+   - **V3 slope → "What drives a longer life?"** a ranked diverging-bar chart of each factor's correlation with life expectancy (GDP, health spending, fertility, TB, malaria, maternal deaths). Bars beat slopegraphs for general audiences. Shown as **correlation, stated on-chart as *not* proof of cause**.
+   - **V5 connected scatter → "Does money buy survival?"** a clean one-year GDP × child-mortality scatter with the threshold line + an overall trend curve.
+   - **V6** gains a **combined median-lines default** with a toggle to the original 6-panel small multiples.
+9. **Fullscreen overview grid + click-to-expand** instead of a long scroll (overview first → details on demand).
+10. **Storytelling layer.** Chart titles state the takeaway in plain language; a data-driven standfirst summarises the finding; on-chart annotations point at the key insight; and the region colour key lives once in the header (not repeated on every chart).
+
+All redesigned views still satisfy the brief: **≥6 interactive charts · 2 per student · 3 analytical questions · 5 interactivity types.**
 
 ---
 
