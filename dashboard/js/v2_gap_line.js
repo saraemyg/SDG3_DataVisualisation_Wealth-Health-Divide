@@ -75,8 +75,7 @@ App.charts.v2 = (function () {
         .attr("opacity", emph ? 1 : 0.5).text(s.bloc);
     });
 
-    // gap annotation between OECD & OPEC at the last shared year
-    annotateGap(data, out);
+
 
     // selected-country overlay (linked highlight)
     if (S.s.selectedCountry) {
@@ -104,20 +103,7 @@ App.charts.v2 = (function () {
     setInsight(data, out);
   }
 
-  function annotateGap(data, out) {
-    const oecd = data.find(s => s.bloc === "OECD"), opec = data.find(s => s.bloc === "OPEC");
-    if (!oecd || !opec || !oecd.pts.length || !opec.pts.length) return;
-    const yr = Math.min(oecd.pts[oecd.pts.length - 1].year, opec.pts[opec.pts.length - 1].year);
-    const a = oecd.pts.find(p => p.year === yr), b = opec.pts.find(p => p.year === yr);
-    if (!a || !b) return;
-    const gap = Math.abs(a.val - b.val);
-    const midY = (y(a.val) + y(b.val)) / 2;
-    g.append("line").attr("x1", x(yr)).attr("x2", x(yr)).attr("y1", y(a.val)).attr("y2", y(b.val))
-      .attr("stroke", "#333").attr("stroke-width", 1).attr("opacity", 0.5);
-    g.append("text").attr("x", x(yr) - 6).attr("y", midY).attr("text-anchor", "end").attr("dy", "0.32em")
-      .attr("class", "anno-text").attr("font-weight", 700).attr("font-size", 11)
-      .text(`${gap.toFixed(0)} ${out.unit === "yrs" ? "yr" : ""} gap`);
-  }
+
 
   function hover(e, data, out) {
     const yr = Math.round(x.invert(d3.pointer(e)[0]));
@@ -168,8 +154,11 @@ App.charts.v2 = (function () {
   }
 
   function buildLegend() {
-    App.util.discreteLegend(d3.select("#legend-v2"), "Economic bloc",
+    const sel = d3.select("#legend-v2");
+    sel.html("");
+    const box = App.util.discreteLegend(sel, "Line colour = economic bloc",
       S.s.meta.blocs.map(b => ({ label: b, color: App.config.blocColors[b] })), { horizontal: true });
+    box.append("div").attr("class", "legend-note").text("Each line shows the median value for that bloc in each year.");
   }
 
   return { init };

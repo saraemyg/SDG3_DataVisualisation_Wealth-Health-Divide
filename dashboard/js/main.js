@@ -104,14 +104,11 @@
     const names = Array.from(S.s.byCountry.keys()).sort(d3.ascending);
     d3.select("#country-list").selectAll("option").data(names).join("option").attr("value", d => d);
     const searchBox = d3.select("#country-search");
-    const searchErr = d3.select("#country-search").node().parentNode
-      ? d3.select("#country-search").node().insertAdjacentHTML("afterend",
-          "<div id='search-error' class='search-error' aria-live='polite'></div>") || d3.select("#search-error")
-      : null;
+    const searchErr = d3.select("#search-error");
 
     function clearSearchError() {
       searchBox.classed("search-invalid", false);
-      d3.select("#search-error").text("");
+      searchErr.text("");
     }
 
     searchBox.on("input", clearSearchError);
@@ -125,7 +122,7 @@
         S.clearSelection();
       } else {
         searchBox.classed("search-invalid", true);
-        d3.select("#search-error").text("Country not found");
+        searchErr.text("Country not found");
       }
     });
 
@@ -138,7 +135,7 @@
       d3.select("#country-search").property("value", c || "");
       // clear any error state when selection changes from outside the search box
       d3.select("#country-search").classed("search-invalid", false);
-      d3.select("#search-error").text("");
+      searchErr.text("");
     });
   }
 

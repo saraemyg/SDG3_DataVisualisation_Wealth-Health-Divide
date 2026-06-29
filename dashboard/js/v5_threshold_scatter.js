@@ -4,9 +4,8 @@
  *   - a dashed THRESHOLD line + band: the income beyond which child deaths stop falling fast;
  *   - a grey TREND curve: the typical (median) mortality at each income — above = worse than
  *     expected for that income, below = better;
- *   - soft REGION HULLS: a translucent blob behind each continent's dots so you can see how each
- *     continent clusters (e.g. Sub-Saharan Africa = low income / high mortality, Europe = the
- *     opposite). The dots move with the global year cursor. */
+ *   - a small boxed REGION legend inside the plot so the colours read like a map key.
+ * The dots move with the global year cursor. */
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v5 = (function () {
@@ -16,10 +15,13 @@ App.charts.v5 = (function () {
     "Europe & Central Asia": "Europe", "Americas": "Americas", "East Asia & Pacific": "E Asia/Pac",
     "South Asia": "South Asia", "Middle East & North Africa": "MENA", "Sub-Saharan Africa": "Sub-Sah. Africa"
   };
-  let svg, g, x, y, rPop, threshold, W = NARROW, iW, iH;
+  let svg, g, x, y, rPop, threshold, W = NARROW, iW, iH, legendBox;
 
   function init() {
-    svg = d3.select("#v5").append("svg");
+    const root = d3.select("#v5");
+    root.selectAll(".v5-legend").remove();
+    legendBox = root.append("div").attr("class", "v5-legend");
+    svg = root.append("svg");
     g = svg.append("g");
     rPop = d3.scaleSqrt().domain([0, App.scales.domains.population[1]]).range([2.5, 12]);
     buildLegend();
@@ -50,25 +52,22 @@ App.charts.v5 = (function () {
     y = App.scales.infantY([iH, 0]);
     threshold = computeThreshold();
 
-    // paint order: grid -> axes -> threshold band -> region hulls -> trend -> threshold line -> dots -> labels
+    // paint order: grid -> axes -> threshold band -> trend -> threshold line -> dots
     g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-iW).tickFormat("")).select(".domain").remove();
     const xticks = [200, 1000, 5000, 20000, 100000].filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
     g.append("g").attr("class", "axis").attr("transform", `translate(0,${iH})`)
       .call(d3.axisBottom(x).tickValues(xticks).tickFormat(d => "$" + d3.format("~s")(d)));
     g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(6));
     g.append("text").attr("class", "axis-title").attr("x", iW).attr("y", iH + 40).attr("text-anchor", "end")
-      .text("GDP per person (US$, log) — richer →");
+      .text("GDP per person (US$, log) → richer");
     g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)").attr("x", 0).attr("y", -42)
-      .attr("text-anchor", "end").text("↑ more children die (per 1,000)");
+      .attr("text-anchor", "end").text("more children die (per 1,000) →");
 
     g.append("rect").attr("x", x(threshold.bandLo)).attr("width", x(threshold.bandHi) - x(threshold.bandLo))
       .attr("y", 0).attr("height", iH).attr("fill", "#0072B2").attr("opacity", 0.06);
-
-    g.append("g").attr("class", "groups");
     drawTrend();
     drawThresholdLine();
     g.append("g").attr("class", "dots");
-    g.append("g").attr("class", "glabels");
     render();
   }
 
@@ -88,7 +87,7 @@ App.charts.v5 = (function () {
   function drawThresholdLine() {
     g.append("line").attr("x1", x(threshold.value)).attr("x2", x(threshold.value)).attr("y1", 0).attr("y2", iH)
       .attr("stroke", "#0072B2").attr("stroke-dasharray", "4 3").attr("stroke-width", 1.4);
-    g.append("text").attr("x", x(threshold.value)).attr("y", 12).attr("text-anchor", "middle")
+    g.append("text").attr("x", x(threshold.value)).attr("y", 35).attr("text-anchor", "middle")
       .attr("class", "anno-text").attr("font-size", 10).attr("fill", "#0072B2").attr("font-weight", 700)
       .text(`≈ $${d3.format(",.0f")(threshold.value)} — deaths stop falling fast`);
   }
@@ -115,41 +114,10 @@ App.charts.v5 = (function () {
     });
   }
 
-  /* soft translucent hull behind each continent's dots */
-  function drawGroups(data) {
-    const hulls = [];
-    d3.group(data, d => d.region).forEach((arr, region) => {
-      const pts = arr.map(d => [x(d.gdp_per_capita), y(d.infant_mortality)]);
-      if (pts.length < 3) return;
-      const hull = d3.polygonHull(pts);
-      if (!hull) return;
-      const cx = d3.mean(hull, p => p[0]), cy = d3.mean(hull, p => p[1]), pad = 12;
-      const padded = hull.map(([px, py]) => { const dx = px - cx, dy = py - cy, l = Math.hypot(dx, dy) || 1; return [px + dx / l * pad, py + dy / l * pad]; });
-      hulls.push({ region, hull: padded, cx, cy });
-    });
-    const line = d3.line().curve(d3.curveCatmullRomClosed);
-    g.select(".groups").selectAll("path").data(hulls, d => d.region).join("path")
-      .attr("d", d => line(d.hull) + "Z")
-      .attr("fill", d => App.scales.region(d.region)).attr("fill-opacity", 0.10)
-      .attr("stroke", d => App.scales.region(d.region)).attr("stroke-opacity", 0.30).attr("stroke-width", 1);
-    // label each blob near its top edge, then de-overlap vertically so the clustered
-    // wealthy continents don't print on top of each other
-    hulls.sort((a, b) => a.region.localeCompare(b.region));
-    const topY = hulls.map(h => Math.min(...h.hull.map(p => p[1])) - 4);
-    const dodged = App.util.dodge(topY, 13);
-    hulls.forEach((h, i) => { h.ly = Math.max(8, dodged[i]); });
-    g.select(".glabels").selectAll("text").data(hulls, d => d.region).join("text")
-      .attr("class", "v5-grouplabel anno-text").attr("x", d => d.cx).attr("y", d => d.ly)
-      .attr("text-anchor", "middle").attr("fill", d => App.scales.region(d.region))
-      .attr("font-size", 9.5).attr("font-weight", 700).attr("opacity", 0.95)
-      .text(d => shortRegion[d.region] || d.region);
-  }
-
   function render() {
     const yr = S.s.currentYear;
     const data = S.yearData(yr).filter(d => d.gdp_per_capita != null && d.infant_mortality != null && d.population != null)
       .sort((a, b) => b.population - a.population);
-    drawGroups(data);
     g.select(".dots").selectAll("circle").data(data, d => d.country).join(
       enter => enter.append("circle").attr("r", d => rPop(d.population))
         .attr("cx", d => x(d.gdp_per_capita)).attr("cy", d => y(d.infant_mortality))
@@ -178,18 +146,39 @@ App.charts.v5 = (function () {
   }
 
   function buildLegend() {
-    const sel = d3.select("#legend-v5");
-    sel.html("");
-    const b = sel.append("div").attr("class", "legend-block");
-    b.append("div").attr("class", "legend-title").text("How to read this chart");
-    b.append("div").attr("class", "legend-items v").html(
-      `<div class="legend-item"><span class="swatch" style="border-radius:50%;background:#bbb;width:8px;height:8px"></span>each dot = one country &nbsp;(→ richer, ↑ more deaths)</div>
-       <div class="legend-item"><span class="swatch" style="border-radius:50%;background:#bbb;width:15px;height:15px"></span>bigger dot = bigger population</div>
-       <div class="legend-item"><span class="swatch" style="background:#555;height:3px;align-self:center"></span>grey curve = typical (median) level for that income</div>
-       <div class="legend-item"><span class="swatch" style="background:#0072B2;opacity:.5"></span>dashed line / band = income threshold</div>
-       <div class="legend-item"><span class="swatch" style="background:#56B4E9;opacity:.3"></span>shaded blob = where a continent clusters</div>`);
-    App.util.discreteLegend(sel, "Continent (dot & blob colour)",
-      S.s.meta.regions.map(rg => ({ label: shortRegion[rg] || rg, color: App.scales.region(rg) })), { horizontal: true });
+    legendBox.html("");
+    const box = legendBox.append("div").attr("class", "v5-legend-box");
+    
+    const header = box.append("div").attr("class", "v5-legend-header")
+      .style("display", "flex")
+      .style("justify-content", "space-between")
+      .style("align-items", "center")
+      .style("cursor", "pointer")
+      .style("user-select", "none");
+      
+    header.append("div").attr("class", "v5-legend-title").text("Legend");
+    const toggle = header.append("span").attr("class", "v5-legend-toggle").text("−");
+
+    const items = box.append("div").attr("class", "v5-legend-items");
+    S.s.meta.regions.forEach(rg => {
+      const row = items.append("div").attr("class", "v5-legend-item");
+      row.append("span").attr("class", "v5-legend-swatch").style("background", App.scales.region(rg));
+      row.append("span").text(shortRegion[rg] || rg);
+    });
+    const sizeRow = items.append("div").attr("class", "v5-legend-item v5-size-item");
+    sizeRow.append("span")
+      .attr("class", "v5-legend-swatch v5-size-swatch")
+      .style("width", "16px")
+      .style("height", "16px")
+      .style("border-radius", "50%")
+      .style("background", "#b6d9f2");
+    sizeRow.append("span").text("Bigger point = more people");
+
+    header.on("click", () => {
+      const collapsed = box.classed("collapsed");
+      box.classed("collapsed", !collapsed);
+      toggle.text(collapsed ? "−" : "+");
+    });
   }
 
   return { init, setWide, threshold: () => threshold.value };

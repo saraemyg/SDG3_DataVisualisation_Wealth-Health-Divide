@@ -20,6 +20,21 @@
       <p class="standfirst" id="standfirst">Loading the data…</p>
     </div>
 
+    <div class="quick-guide" id="quick-guide" aria-label="How to read the dashboard">
+      <div class="guide-item">
+        <strong>Read the marks</strong>
+        <span>Bubble size = population · region colours = continent/group · map colour = child mortality</span>
+      </div>
+      <div class="guide-item">
+        <strong>Use the controls</strong>
+        <span>Drag the year, click a region or bloc to filter, search a country, or press Reset</span>
+      </div>
+      <div class="guide-item">
+        <strong>Get details</strong>
+        <span>Hover for exact values, click a country to spotlight it everywhere, and expand any chart</span>
+      </div>
+    </div>
+
     <div class="controls">
       <div class="control year-control">
         <label>Year <span class="hint">drag, or press play</span></label>
@@ -39,8 +54,10 @@
       </div>
       <div class="control selection-control">
         <label>Spotlight a country</label>
-        <input id="country-search" class="country-search" list="country-list" placeholder="🔍 search…" autocomplete="off" />
+        <input id="country-search" class="country-search" list="country-list" placeholder="Search a country…" autocomplete="off" aria-describedby="search-hint search-error" />
         <datalist id="country-list"></datalist>
+        <div id="search-hint" class="search-hint">Try Norway, India, or Kenya.</div>
+        <div id="search-error" class="search-error" aria-live="polite"></div>
         <div id="selection-readout" class="selection">none — click any country</div>
       </div>
       <div class="control reset-control">
@@ -62,7 +79,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>Richer countries live longer</h2>
-          <p class="card-sub">Each bubble a country — <b>→ richer</b>, <b>↑ longer-lived</b>, size = population. Press ▶ to play 1960→2011.</p>
+          <p class="card-sub">Each bubble is one country. <b>Right = richer</b>, <b>up = longer-lived</b>, and bubble size = population. Move the year to compare years.</p>
         </div>
         <div class="legend" id="legend-v1"></div>
       </div>
@@ -75,7 +92,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>Is the health gap closing?</h2>
-          <p class="card-sub">Each line = a bloc's median over time. Are wealthy <b>OECD</b> &amp; oil-exporting <b>OPEC</b> converging?</p>
+          <p class="card-sub">Each line shows the median country in that bloc. Use the toggle to compare <b>life expectancy</b> or <b>child mortality</b>.</p>
         </div>
         <div class="legend" id="legend-v2"></div>
       </div>
@@ -89,7 +106,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>What drives a longer life?</h2>
-          <p class="card-sub">How strongly each factor tracks life expectancy this year. <b>Correlation, not proof of cause.</b></p>
+          <p class="card-sub">Bars show which factors move with life expectancy this year. <b>Green means longer life</b>, <b>red means shorter life</b>.</p>
         </div>
         <div class="legend" id="legend-v3"></div>
       </div>
@@ -102,7 +119,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>Where children still die youngest</h2>
-          <p class="card-sub">Colour = infant deaths per 1,000 births. Scroll to zoom, drag to pan, click a country.</p>
+          <p class="card-sub">Darker countries have more child deaths per 1,000 births. Hover the map or the panel to find the safest and deadliest places.</p>
         </div>
         <div class="legend" id="legend-v4"></div>
       </div>
@@ -115,7 +132,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>Does money buy survival?</h2>
-          <p class="card-sub">Each dot a country — child deaths vs income. Shaded blobs group each continent; the grey curve is the typical level.</p>
+          <p class="card-sub">Each dot is one country. <b>Right = richer</b>, <b>up = more child deaths</b>, and bubble size = population.</p>
         </div>
         <div class="legend" id="legend-v5"></div>
       </div>
@@ -128,7 +145,7 @@
       <div class="card-head">
         <div class="card-titles">
           <h2>Are regions converging on long lives?</h2>
-          <p class="card-sub">Median life expectancy per region. <b>Lines drifting together = convergence.</b></p>
+          <p class="card-sub">Each line is a region's median life expectancy. In the combined view, lines moving closer together mean convergence.</p>
         </div>
         <div class="legend" id="legend-v6"></div>
       </div>

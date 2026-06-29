@@ -155,9 +155,12 @@ App.charts.v6 = (function () {
   }
 
   function buildLegend() {
-    d3.select("#legend-v6").append("div").attr("class", "legend-block")
-      .append("div").attr("class", "legend-title").style("text-transform", "none").style("font-weight", "400")
-      .html("colour = region (header key) · dashed = current year");
+    const sel = d3.select("#legend-v6");
+    sel.html("");
+    const box = sel.append("div").attr("class", "legend-block");
+    box.append("div").attr("class", "legend-title").style("text-transform", "none").style("font-weight", "600")
+      .text("Line colour = region");
+    box.append("div").attr("class", "legend-note").text("The dashed vertical line marks the selected year.");
   }
 
   return { init };

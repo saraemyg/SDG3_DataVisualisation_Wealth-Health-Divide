@@ -8,10 +8,17 @@ App.charts = App.charts || {};
 App.charts.v1 = (function () {
   const M = { top: 16, right: 22, bottom: 48, left: 60 }, H = 470, NARROW = 720;
   const S = App.state;
-  let svg, g, x, y, r, yearText, W = NARROW, iW, iH;
+  const shortRegion = {
+    "Europe & Central Asia": "Europe", "Americas": "Americas", "East Asia & Pacific": "E Asia/Pac",
+    "South Asia": "South Asia", "Middle East & North Africa": "MENA", "Sub-Saharan Africa": "Sub-Sah. Africa"
+  };
+  let svg, g, x, y, r, yearText, W = NARROW, iW, iH, legendBox;
 
   function init() {
-    svg = d3.select("#v1").append("svg");
+    const root = d3.select("#v1");
+    root.selectAll(".v1-legend").remove();
+    legendBox = root.append("div").attr("class", "v1-legend");
+    svg = root.append("svg");
     g = svg.append("g");
     r = App.scales.popR(38);              // population->radius (width-independent)
     buildLegend();                        // size key uses r (built once)
@@ -89,23 +96,12 @@ App.charts.v1 = (function () {
         .attr("r", d => r(d.population))),
       exit => exit.call(ex => ex.transition().duration(dur).attr("r", 0).remove())
     );
-    drawAnnotation(data);
+
     applyHighlight(S.s.selectedCountry);
     setInsight(data, year);
   }
 
-  // call out the "rich & long-lived" corner where OECD nations cluster (Q1 story);
-  // redrawn each frame so it follows the cluster as the years play.
-  function drawAnnotation(data) {
-    g.selectAll(".annotation").remove();
-    const oecd = data.filter(d => d.bloc === "OECD");
-    if (oecd.length < 3) return;
-    const cx = d3.mean(oecd, d => x(d.gdp_per_capita)), cy = d3.mean(oecd, d => y(d.life_expectancy));
-    App.util.annotate(g, {
-      x: Math.max(4, Math.min(cx - 40, iW - 150)), y: 22, anchor: "start",
-      text: ["Rich & long-lived", "— mostly OECD nations"], leaderTo: [cx, cy], color: "#5E4FA2"
-    });
-  }
+
 
   function applyHighlight(country) {
     const circles = g.select(".bubbles").selectAll("circle");
@@ -125,10 +121,40 @@ App.charts.v1 = (function () {
   }
 
   function buildLegend() {
-    // region colour key lives once in the header (the chips) — here we only need the
-    // chart-specific size key, so we don't repeat the 6 region names on every chart.
-    App.util.sizeLegend(d3.select("#legend-v1"), "Population (bubble area)", r,
-      [1e7, 1e8, 1e9], v => d3.format(".0s")(v).replace("G", "B"));
+    d3.select("#legend-v1").html("");
+    legendBox.html("");
+    const box = legendBox.append("div").attr("class", "v1-legend-box");
+    
+    const header = box.append("div").attr("class", "v1-legend-header")
+      .style("display", "flex")
+      .style("justify-content", "space-between")
+      .style("align-items", "center")
+      .style("cursor", "pointer")
+      .style("user-select", "none");
+      
+    header.append("div").attr("class", "v1-legend-title").text("Legend");
+    const toggle = header.append("span").attr("class", "v1-legend-toggle").text("−");
+
+    const items = box.append("div").attr("class", "v1-legend-items");
+    S.s.meta.regions.forEach(rg => {
+      const row = items.append("div").attr("class", "v1-legend-item");
+      row.append("span").attr("class", "v1-legend-swatch").style("background", App.scales.region(rg));
+      row.append("span").text(shortRegion[rg] || rg);
+    });
+    const sizeRow = items.append("div").attr("class", "v1-legend-item v1-size-item");
+    sizeRow.append("span")
+      .attr("class", "v1-legend-swatch v1-size-swatch")
+      .style("width", "16px")
+      .style("height", "16px")
+      .style("border-radius", "50%")
+      .style("background", "#b6d9f2");
+    sizeRow.append("span").text("Bigger point = more people");
+
+    header.on("click", () => {
+      const collapsed = box.classed("collapsed");
+      box.classed("collapsed", !collapsed);
+      toggle.text(collapsed ? "−" : "+");
+    });
   }
 
   return { init, setWide };

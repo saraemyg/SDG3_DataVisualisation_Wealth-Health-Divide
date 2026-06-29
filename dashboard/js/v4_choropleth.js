@@ -15,7 +15,7 @@ App.charts.v4 = (function () {
     "Europe & Central Asia": "Europe", "Americas": "Americas", "East Asia & Pacific": "E Asia/Pac",
     "South Asia": "South Asia", "Middle East & North Africa": "MENA", "Sub-Saharan Africa": "Sub-Sah. Africa"
   };
-  let svg, gMap, path, features, byIso, currentYear, panel;
+  let svg, gMap, path, features, byIso, currentYear, panel, scaleLegend, panelMode = "full";
 
   function init() {
     const root = d3.select("#v4");
@@ -37,8 +37,10 @@ App.charts.v4 = (function () {
       .on("zoom", e => gMap.attr("transform", e.transform)));
 
     panel = root.append("div").attr("class", "v4-panel").attr("id", "v4-panel");
+    scaleLegend = root.append("div").attr("class", "v4-scale-legend");
 
     buildLegend();
+    buildScaleLegend();
     render(S.s.currentYear);
     S.on("year", "v4", render);
     S.on("filter", "v4", () => render(currentYear));
@@ -78,8 +80,7 @@ App.charts.v4 = (function () {
         <span class="rb-val">${d.m.toFixed(0)}</span>
       </div>`).join("");
 
-    panel.html(`
-      <div class="gap-title">Wealth–health gap · ${year}</div>
+    const bodyHtml = `
       <div class="gap-grid">
         <div class="gap-col best" data-grp="best">
           <div class="gap-lab">✅ 10 safest</div>
@@ -94,7 +95,43 @@ App.charts.v4 = (function () {
       </div>
       <div class="gap-summary">${mortX ? `<b>${mortX.toFixed(0)}×</b> the child deaths` : ""}${gdpX ? ` · <b>${gdpX.toFixed(0)}×</b> less income` : ""}<br>
         <b>${ssa}/10</b> deadliest are in Sub-Saharan Africa</div>
-      <div class="region-bars"><div class="rb-head">Avg child mortality by region</div>${regHtml}</div>`);
+      <div class="region-bars"><div class="rb-head">Avg child mortality by region</div>${regHtml}</div>`;
+
+    if (panelMode === "hidden") {
+      panel.classed("hidden", true).classed("compact", false)
+        .html(`<button type="button" class="panel-peek" aria-label="Show child mortality info">Child mortality gap · ${year}</button>`);
+      panel.select(".panel-peek").on("click", () => { panelMode = "compact"; buildGapPanel(recs, year); });
+    } else if (panelMode === "compact") {
+      panel.classed("hidden", false).classed("compact", true)
+        .html(`
+          <div class="panel-head">
+            <div class="gap-title">Child mortality gap · ${year}</div>
+            <div class="panel-actions">
+              <button type="button" class="panel-btn" data-action="expand" aria-label="Expand child mortality info">▢</button>
+              <button type="button" class="panel-btn" data-action="close" aria-label="Close child mortality info">×</button>
+            </div>
+          </div>
+          ${bodyHtml}`);
+    } else {
+      panel.classed("hidden", false).classed("compact", false)
+        .html(`
+          <div class="panel-head">
+            <div class="gap-title">Child mortality gap · ${year}</div>
+            <div class="panel-actions">
+              <button type="button" class="panel-btn" data-action="collapse" aria-label="Collapse child mortality info">–</button>
+              <button type="button" class="panel-btn" data-action="close" aria-label="Close child mortality info">×</button>
+            </div>
+          </div>
+          ${bodyHtml}`);
+    }
+
+    panel.selectAll(".panel-btn").on("click", function () {
+      const action = this.dataset.action;
+      if (action === "close") panelMode = "hidden";
+      if (action === "collapse") panelMode = "compact";
+      if (action === "expand") panelMode = "full";
+      buildGapPanel(recs, year);
+    });
 
     // group sets for map highlighting
     const isoOf = arr => new Set(arr.map(d => d.iso_numeric));
@@ -109,9 +146,9 @@ App.charts.v4 = (function () {
     }).on("mouseleave", clearSet);
 
     d3.select("#insight-v4").html(
-      `Children in the <b>10 deadliest</b> countries die about <b>${mortX ? mortX.toFixed(0) : "?"}×</b> as often as in the ` +
-      `<b>10 safest</b>, on roughly <b>${gdpX ? gdpX.toFixed(0) : "?"}× lower income</b> — and ${ssa} of those 10 are in ` +
-      `Sub-Saharan Africa. Hover the panel to find them on the map.`);
+      `The <b>10 deadliest</b> countries have about <b>${mortX ? mortX.toFixed(0) : "?"}×</b> as many child deaths as the ` +
+      `<b>10 safest</b>, and their average income is about <b>${gdpX ? gdpX.toFixed(0) : "?"}× lower</b>. ` +
+      `${ssa} of those 10 are in Sub-Saharan Africa. Hover the panel to find them on the map.`);
   }
 
   function highlightSet(isoSet) {
@@ -139,8 +176,85 @@ App.charts.v4 = (function () {
   }
 
   function buildLegend() {
-    App.util.gradientLegend(d3.select("#legend-v4"), "Infant mortality (per 1,000 births)",
+    const sel = d3.select("#legend-v4");
+    sel.html("");
+    const box = App.util.gradientLegend(sel, "Darker = more child deaths",
       App.scales.seqInterpolator, [0, App.scales.infantMax], d3.format("~s"));
+    
+    const noDataRow = box.append("div")
+      .attr("class", "v4-header-no-data")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("gap", "6px")
+      .style("margin-top", "4px")
+      .style("font-size", "10.5px")
+      .style("color", "var(--ink)");
+    noDataRow.append("span")
+      .style("display", "inline-block")
+      .style("width", "11px")
+      .style("height", "11px")
+      .style("background", "#e9e9e9")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "2px");
+    noDataRow.append("span").text("Unknown data");
+
+    box.append("div").attr("class", "legend-note").text("The panel compares the safest and deadliest countries in the selected year.");
+  }
+
+  function buildScaleLegend() {
+    scaleLegend.html("");
+    const box = scaleLegend.append("div").attr("class", "v4-scale-legend-box");
+    
+    const header = box.append("div").attr("class", "v4-scale-legend-header")
+      .style("display", "flex")
+      .style("justify-content", "space-between")
+      .style("align-items", "center")
+      .style("cursor", "pointer")
+      .style("user-select", "none");
+      
+    header.append("div").attr("class", "v4-scale-title").text("Child mortality per 1,000 births");
+    const toggle = header.append("span").attr("class", "v4-scale-legend-toggle").text("−");
+
+    const svgLegend = box.append("svg").attr("width", 220).attr("height", 44);
+    const defs = svgLegend.append("defs");
+    const grad = defs.append("linearGradient").attr("id", "v4-scale-grad").attr("x1", "0%")
+      .attr("x2", "100%").attr("y1", "0%").attr("y2", "0%");
+    d3.range(0, 1.01, 0.1).forEach(t => {
+      grad.append("stop").attr("offset", `${t * 100}%`).attr("stop-color", App.scales.seqInterpolator(t));
+    });
+    svgLegend.append("rect").attr("x", 16).attr("y", 10).attr("width", 188).attr("height", 12)
+      .attr("rx", 2).attr("fill", "url(#v4-scale-grad)")
+      .attr("stroke", "#222").attr("stroke-width", 0.5);
+    const axis = d3.scaleLinear().domain([0, App.scales.infantMax]).range([16, 204]);
+    svgLegend.append("g").attr("transform", "translate(0,22)")
+      .call(d3.axisBottom(axis).ticks(5).tickSize(4).tickFormat(d3.format("d")))
+      .selectAll("text").attr("font-size", 9);
+    svgLegend.selectAll("path").attr("stroke", "#444");
+    svgLegend.selectAll("line").attr("stroke", "#444");
+
+    const noDataRow = box.append("div")
+      .attr("class", "v4-scale-no-data")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("justify-content", "center")
+      .style("gap", "6px")
+      .style("margin-top", "2px")
+      .style("font-size", "10px")
+      .style("color", "#555");
+    noDataRow.append("span")
+      .style("display", "inline-block")
+      .style("width", "11px")
+      .style("height", "11px")
+      .style("background", "#e9e9e9")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "2px");
+    noDataRow.append("span").text("Unknown data");
+
+    header.on("click", () => {
+      const collapsed = box.classed("collapsed");
+      box.classed("collapsed", !collapsed);
+      toggle.text(collapsed ? "−" : "+");
+    });
   }
 
   return { init };

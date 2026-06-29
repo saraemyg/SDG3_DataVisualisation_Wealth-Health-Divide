@@ -114,9 +114,12 @@ App.charts.v3 = (function () {
   }
 
   function buildLegend() {
-    App.util.discreteLegend(d3.select("#legend-v3"), "Direction",
+    const sel = d3.select("#legend-v3");
+    sel.html("");
+    const box = App.util.discreteLegend(sel, "Bar colour = direction",
       [{ label: "goes with longer life", color: App.config.goodColor },
        { label: "goes with shorter life", color: App.config.badColor }], { horizontal: true });
+    box.append("div").attr("class", "legend-note").text("Bars show correlation only, not proof of cause.");
   }
 
   return { init };
