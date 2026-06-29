@@ -160,7 +160,7 @@ body {
 .card-sub b { color: #2a2a2a; font-weight: 650; }
 
 /* the chart fills all remaining card height; SVGs use viewBox + meet so they scale to fit */
-.chart { flex: 1; min-height: 0; width: 100%; }
+.chart { flex: 1; min-height: 0; width: 100%; position: relative; }
 .chart svg { width: 100%; height: 100%; display: block; font-family: var(--font); }
 .insight { margin: 5px 2px 0; font-size: 11.5px; color: #666; line-height: 1.4; font-style: italic; flex: none; }
 
@@ -179,20 +179,33 @@ body {
 .card:not(.focused) .legend,
 .card:not(.focused) .insight { display: none; }
 
-/* ---------------- Focus / expand: one chart takes over the screen ---------------- */
-.focus-backdrop {
-  position: fixed; inset: 0; background: rgba(20,20,20,0.45);
-  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.15s;
+/* ---------------- Focus / expand: chart grows IN PAGE; others scroll below it ---------------- */
+.focus-backdrop { display: none; }                 /* no modal overlay — we expand in place */
+
+/* in focus mode the page scrolls and the header (controls) stays pinned on top */
+body.has-focus { height: auto; overflow-y: auto; }
+body.has-focus .app-header { position: sticky; top: 0; z-index: 50; }
+
+.dashboard.focus-mode {
+  flex: none; height: auto;
+  grid-template-rows: none;
+  grid-auto-rows: auto;                 /* each row sizes to its content */
 }
-body.has-focus .focus-backdrop { opacity: 1; pointer-events: auto; }
-.card.focused {
-  position: fixed; inset: 4vh 5vw; z-index: 110; margin: 0;
-  padding: 16px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+.dashboard.focus-mode .card.focused {
+  grid-column: 1 / -1;                  /* span the full page width */
+  height: calc(100vh - 168px);          /* fill the viewport below the header */
+  order: -1;                            /* …and sit first, above the rest */
 }
-.card.focused .card-head h2 { font-size: 19px; }
+.dashboard.focus-mode .card:not(.focused) { height: 300px; }  /* small previews you scroll to */
+
+.card.focused { box-shadow: 0 6px 22px rgba(0,0,0,0.13); }
+.card.focused .card-head h2 { font-size: 18px; }
 .card.focused .card-sub { font-size: 13px; }
 .card.focused .insight { font-size: 12.5px; }
-.card.focused .expand-btn { width: 28px; height: 28px; font-size: 15px; }
+.card.focused .expand-btn { width: 28px; height: 28px; font-size: 14px; }
+
+/* cards are FLIP-animated (JS sets a transient transform) when the layout changes */
+.card { will-change: transform; }
 
 /* ---------------- Legends ---------------- */
 .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
@@ -243,6 +256,43 @@ body.has-focus .focus-backdrop { opacity: 1; pointer-events: auto; }
 .tooltip td { padding: 1px 0; }
 .tooltip td:first-child { color: var(--muted); padding-right: 12px; }
 .tooltip td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ---------------- V4 wealth–health gap panel (overlaid on the map) ---------------- */
+.v4-panel {
+  position: absolute; top: 6px; left: 6px; z-index: 4;
+  background: rgba(255,255,255,0.94); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; font-size: 10.5px; width: 196px; box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+.v4-panel .gap-title { font-weight: 700; font-size: 10px; color: #555; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.02em; }
+.v4-panel .gap-grid { display: flex; gap: 6px; }
+.v4-panel .gap-col { flex: 1; border-radius: 5px; padding: 4px 6px; cursor: pointer; transition: outline 0.1s; }
+.v4-panel .gap-col.best { background: #eaf4fb; }
+.v4-panel .gap-col.worst { background: #fdecea; }
+.v4-panel .gap-col:hover { outline: 1.5px solid #333; }
+.v4-panel .gap-lab { font-weight: 600; font-size: 9.5px; color: #444; }
+.v4-panel .gap-val { font-size: 16px; font-weight: 700; line-height: 1.1; }
+.v4-panel .gap-val span { font-size: 8.5px; font-weight: 400; color: #888; }
+.v4-panel .gap-gdp { font-size: 9.5px; color: #555; }
+.v4-panel .gap-summary { margin-top: 5px; font-size: 10px; color: #333; line-height: 1.35; }
+.v4-panel .gap-summary b { color: #bd0026; }
+.v4-panel .region-bars { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 5px; }
+.v4-panel .rb-head { font-size: 9px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.02em; }
+.v4-panel .region-bar { display: flex; align-items: center; gap: 4px; font-size: 9px; margin: 1.5px 0; cursor: pointer; border-radius: 3px; }
+.v4-panel .region-bar:hover { background: #f0f0f0; }
+.v4-panel .rb-label { width: 60px; color: #555; white-space: nowrap; }
+.v4-panel .rb-track { flex: 1; height: 8px; background: #eee; border-radius: 3px; overflow: hidden; }
+.v4-panel .rb-fill { display: block; height: 100%; border-radius: 3px; }
+.v4-panel .rb-val { width: 18px; text-align: right; font-variant-numeric: tabular-nums; color: #333; font-weight: 600; }
+
+/* show the region-rank bars only when the map is expanded (compact tiles stay clean) */
+.card:not(.focused) .v4-panel .region-bars { display: none; }
+
+/* V5: show the continent labels on the blobs only when expanded (avoids clutter in mini) */
+.card:not(.focused) .v5-grouplabel { display: none; }
+
+/* map group-highlight (hovering a gap group / region) */
+#v4 path.map-dim { opacity: 0.25; }
+#v4 path.hl { stroke: #111 !important; stroke-width: 1.4 !important; }
 
 /* ---------------- Footer (slim) ---------------- */
 .app-footer { flex: none; padding: 4px 16px 5px; color: var(--muted); font-size: 11px; text-align: center; border-top: 1px solid var(--line); background: #fff; }

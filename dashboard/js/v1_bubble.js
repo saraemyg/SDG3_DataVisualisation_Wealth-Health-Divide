@@ -6,51 +6,57 @@
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v1 = (function () {
-  const W = 720, H = 470, M = { top: 16, right: 22, bottom: 48, left: 60 };
-  const iW = W - M.left - M.right, iH = H - M.top - M.bottom;
+  const M = { top: 16, right: 22, bottom: 48, left: 60 }, H = 470, NARROW = 720;
   const S = App.state;
-  let svg, g, x, y, r, yearText;
+  let svg, g, x, y, r, yearText, W = NARROW, iW, iH;
 
   function init() {
-    const root = d3.select("#v1");
-    svg = root.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
-    g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
+    svg = d3.select("#v1").append("svg");
+    g = svg.append("g");
+    r = App.scales.popR(38);              // population->radius (width-independent)
+    buildLegend();                        // size key uses r (built once)
+    build();
+    S.on("year", "v1", render);
+    S.on("filter", "v1", () => render(S.s.currentYear));
+    S.on("select", "v1", applyHighlight);
+  }
 
+  /* widen the x-axis when expanded so the bubbles aren't squashed; match the big container's
+   * aspect ratio so the chart fills the width. Reverts to the compact width when collapsed. */
+  function setWide(on) {
+    if (on) {
+      const el = document.getElementById("v1");
+      const cw = el.clientWidth, ch = el.clientHeight;
+      const aspect = (cw > 60 && ch > 60) ? Math.min(2.8, Math.max(1.6, cw / ch)) : 2.1;
+      W = Math.round(H * aspect);
+    } else { W = NARROW; }
+    build();
+  }
+
+  /* (re)build the static layout + scales for the current width, then render the frame */
+  function build() {
+    iW = W - M.left - M.right; iH = H - M.top - M.bottom;
+    svg.attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
+    g.attr("transform", `translate(${M.left},${M.top})`).selectAll("*").remove();
     x = App.scales.gdpX([0, iW]);
     y = App.scales.lifeY([iH, 0]);
-    r = App.scales.popR(38);
 
-    // gridlines (muted — high data-ink)
-    g.append("g").attr("class", "grid")
-      .call(d3.axisLeft(y).tickSize(-iW).tickFormat("")).select(".domain").remove();
-
-    // big year watermark behind the bubbles
+    g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-iW).tickFormat("")).select(".domain").remove();
     yearText = g.append("text").attr("class", "year-watermark")
       .attr("x", iW - 6).attr("y", iH - 8).attr("text-anchor", "end")
       .attr("font-size", 76).attr("font-weight", 700).attr("fill", "#f0f0f0");
 
-    // axes — only a few decade ticks so the log labels never pile up (readable even when the
-    // tile is shrunk to grid size). Each gridline is ×5 the previous.
-    const xticks = [200, 1000, 5000, 20000, 100000]
-      .filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
+    const xticks = [200, 1000, 5000, 20000, 100000].filter(v => v >= x.domain()[0] && v <= x.domain()[1]);
     g.append("g").attr("class", "axis x-axis").attr("transform", `translate(0,${iH})`)
       .call(d3.axisBottom(x).tickValues(xticks).tickFormat(d => "$" + d3.format("~s")(d)));
     g.append("g").attr("class", "axis y-axis").call(d3.axisLeft(y).ticks(7));
-
-    // axis titles
     g.append("text").attr("class", "axis-title").attr("x", iW).attr("y", iH + 40)
-      .attr("text-anchor", "end").text("GDP per person (US$ — each gridline ×10) →");
+      .attr("text-anchor", "end").text("GDP per person (US$ — each gridline ×5) →");
     g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)")
       .attr("x", 0).attr("y", -44).attr("text-anchor", "end").text("Life expectancy (years) →");
 
     g.append("g").attr("class", "bubbles");
-
-    buildLegend();
     render(S.s.currentYear);
-
-    S.on("year", "v1", render);
-    S.on("filter", "v1", () => render(S.s.currentYear));
-    S.on("select", "v1", applyHighlight);
   }
 
   function frameData(year) {
@@ -125,5 +131,5 @@ App.charts.v1 = (function () {
       [1e7, 1e8, 1e9], v => d3.format(".0s")(v).replace("G", "B"));
   }
 
-  return { init };
+  return { init, setWide };
 })();

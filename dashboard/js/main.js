@@ -156,22 +156,67 @@
   }
 
   /* ----------------------------- focus / expand controller ----------------------------- */
-  /* overview first, details on demand: each ⤢ button blows one chart up to a full-screen
-   * overlay (charts use viewBox, so they just scale — no re-render needed). Esc / backdrop closes. */
+  /* "Expand" grows the chosen chart IN PAGE to span the full width below the (sticky) header;
+   * the other five shrink into a strip below and the page scrolls. The grow/shrink is animated
+   * with FLIP (charts use viewBox, so they just scale — no re-render needed). Esc collapses. */
   function setupFocus() {
-    function close() {
+    const dash = document.getElementById("dashboard");
+
+    function applyLayout(id) {
       document.querySelectorAll(".card.focused").forEach(c => c.classList.remove("focused"));
-      document.body.classList.remove("has-focus");
+      dash.classList.toggle("focus-mode", !!id);
+      document.body.classList.toggle("has-focus", !!id);
+      if (id) document.getElementById("card-" + id).classList.add("focused");
+      // ⤢ becomes ✕ on the expanded card
+      d3.selectAll(".expand-btn").each(function () {
+        const me = id && this.dataset.card === id;
+        this.textContent = me ? "✕" : "⤢";
+        this.title = me ? "Collapse" : "Expand";
+      });
+      // charts that benefit from more horizontal room re-lay-out wider when expanded
+      ["v1", "v5"].forEach(cid => {
+        if (App.charts[cid] && App.charts[cid].setWide) App.charts[cid].setWide(cid === id);
+      });
     }
+
+    function setFocus(id) {
+      flip(() => applyLayout(id));
+      if (id) window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     d3.selectAll(".expand-btn").on("click", function (e) {
       e.stopPropagation();
-      const card = document.getElementById("card-" + this.dataset.card);
-      const wasOpen = card.classList.contains("focused");
-      close();
-      if (!wasOpen) { card.classList.add("focused"); document.body.classList.add("has-focus"); }
+      const id = this.dataset.card;
+      const open = document.getElementById("card-" + id).classList.contains("focused");
+      setFocus(open ? null : id);
     });
-    d3.select("#focus-backdrop").on("click", close);
-    d3.select("body").on("keydown.focus", e => { if (e.key === "Escape") close(); });
+    d3.select("body").on("keydown.focus", e => { if (e.key === "Escape") setFocus(null); });
+  }
+
+  /* FLIP: record each card's box (First), apply the new layout (Last), Invert via a transform,
+   * then Play the transform back to zero so every card smoothly slides/scales into place. */
+  function flip(applyLayout) {
+    const cards = Array.from(document.querySelectorAll(".card"));
+    const first = cards.map(c => c.getBoundingClientRect());
+    applyLayout();
+    cards.forEach((c, i) => {
+      const f = first[i], l = c.getBoundingClientRect();
+      const dx = f.left - l.left, dy = f.top - l.top;
+      const sx = l.width ? f.width / l.width : 1, sy = l.height ? f.height / l.height : 1;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.02 && Math.abs(sy - 1) < 0.02) return;
+      c.style.transformOrigin = "top left";
+      c.style.transition = "none";
+      c.style.transform = `translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+      c.getBoundingClientRect(); // force reflow so the inverted start state sticks
+      requestAnimationFrame(() => {
+        c.style.transition = "transform 380ms cubic-bezier(.4,0,.2,1)";
+        c.style.transform = "";
+        c.addEventListener("transitionend", function te() {
+          c.style.transition = ""; c.style.transformOrigin = "";
+          c.removeEventListener("transitionend", te);
+        }, { once: true });
+      });
+    });
   }
 
   function updateSelectionReadout(country) {
