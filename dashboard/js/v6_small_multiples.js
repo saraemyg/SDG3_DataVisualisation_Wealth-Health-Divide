@@ -7,20 +7,39 @@
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v6 = (function () {
-  const W = 540, H = 410;
+  const NARROW = 540, H = 410;
   const S = App.state;
-  let svg, mode = "combined", x, y, regionSeries;
+  // per-region crisis markers drawn ON the panels (the dips in the band's floor)
+  const EVENTS = {
+    "East Asia & Pacific": { year: 1977, cause: "Cambodia", full: "Cambodia (Khmer Rouge)" },
+    "Sub-Saharan Africa": { year: 1994, cause: "Rwanda", full: "Rwandan genocide" },
+    "Americas": { year: 2010, cause: "Haiti", full: "Haiti earthquake" }
+  };
+  let svg, mode = "separate", x, y, regionSeries, W = NARROW, gutter = 0;
 
   function init() {
+    const root = d3.select("#v6");
     buildControls();
-    svg = d3.select("#v6").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
+    svg = root.append("svg");
     y = d3.scaleLinear().domain([Math.max(0, S.s.meta.domains.life_expectancy[0] - 2),
       S.s.meta.domains.life_expectancy[1] + 1]).nice();
+    buildExplain(root);
     buildLegend();
     render();
     S.on("filter", "v6", render);
     S.on("year", "v6", render);
     S.on("select", "v6", render);
+  }
+
+  /* when expanded, widen + reserve a right gutter for the explainer panel */
+  function setWide(on) {
+    if (on) {
+      const el = document.getElementById("v6");
+      const cw = el.clientWidth, ch = el.clientHeight;
+      const aspect = (cw > 60 && ch > 60) ? Math.min(2.8, Math.max(1.6, cw / ch)) : 2.0;
+      W = Math.round(H * aspect); gutter = 250;
+    } else { W = NARROW; gutter = 0; }
+    render();
   }
 
   /* per region: per-year {year,min,median,max} from countries passing the filter */
@@ -39,6 +58,7 @@ App.charts.v6 = (function () {
 
   function render() {
     regionSeries = computeSeries();
+    svg.attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
     svg.selectAll("*").remove();
     if (mode === "combined") renderCombined(); else renderSeparate();
     setInsight();
@@ -47,7 +67,7 @@ App.charts.v6 = (function () {
   /* ---------- COMBINED: 6 median lines on one set of axes ---------- */
   function renderCombined() {
     const M = { top: 14, right: 104, bottom: 28, left: 40 };
-    const iW = W - M.left - M.right, iH = H - M.top - M.bottom;
+    const iW = (W - gutter) - M.left - M.right, iH = H - M.top - M.bottom;
     x = d3.scaleLinear().domain([S.s.meta.yearMin, S.s.meta.yearMax]).range([0, iW]);
     y.range([iH, 0]);
     const g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
@@ -78,7 +98,7 @@ App.charts.v6 = (function () {
   function renderSeparate() {
     const OUT = { top: 12, right: 10, bottom: 26, left: 36 }, COLS = 2, GAP = 38;
     const rows = Math.ceil(S.s.meta.regions.length / COLS);
-    const panelW = (W - OUT.left - OUT.right - GAP * (COLS - 1)) / COLS;
+    const panelW = ((W - gutter) - OUT.left - OUT.right - GAP * (COLS - 1)) / COLS;
     const panelH = (H - OUT.top - OUT.bottom - GAP * (rows - 1)) / rows;
     x = d3.scaleLinear().domain([S.s.meta.yearMin, S.s.meta.yearMax]).range([0, panelW]);
     y.range([panelH, 0]);
@@ -98,6 +118,28 @@ App.charts.v6 = (function () {
       gp.append("g").call(d3.axisLeft(y).ticks(4)).selectAll("text").attr("font-size", 8.5);
       gp.append("line").attr("x1", x(S.s.currentYear)).attr("x2", x(S.s.currentYear)).attr("y1", 0).attr("y2", panelH)
         .attr("stroke", "#999").attr("stroke-dasharray", "2 2").attr("opacity", 0.7);
+
+      // crisis marker drawn ON the panel (a line + a dot at the dip + a short label)
+      const ev = EVENTS[region];
+      if (ev && ev.year >= S.s.meta.yearMin && ev.year <= S.s.meta.yearMax) {
+        const ex = x(ev.year), pt = data.find(d => d.year === ev.year);
+        const near = ex > panelW * 0.66;   // flip the label left when the marker is near the right edge
+        gp.append("line").attr("x1", ex).attr("x2", ex).attr("y1", 0).attr("y2", panelH)
+          .attr("stroke", "#b3261e").attr("stroke-dasharray", "2 2").attr("opacity", 0.85);
+        if (pt && pt.min != null) gp.append("circle").attr("cx", ex).attr("cy", y(pt.min)).attr("r", 2.6)
+          .attr("fill", "#b3261e").attr("stroke", "#fff").attr("stroke-width", 0.8);
+        gp.append("text").attr("x", near ? ex - 3 : ex + 3).attr("text-anchor", near ? "end" : "start")
+          .attr("y", (pt && pt.min != null) ? y(pt.min) - 4 : 12)
+          .attr("font-size", 8).attr("font-weight", 700).attr("fill", "#b3261e")
+          .attr("paint-order", "stroke").attr("stroke", "#fff").attr("stroke-width", 2).attr("stroke-linejoin", "round")
+          .text(`${ev.cause} ’${String(ev.year).slice(2)}`);
+        gp.append("rect").attr("x", ex - 5).attr("y", 0).attr("width", 10).attr("height", panelH).attr("fill", "transparent")
+          .style("cursor", "help")
+          .on("mousemove", e => App.util.tooltip.show(
+            `<div class="tt-title">${ev.year} — ${region}</div><div class="tt-sub" style="white-space:normal;max-width:200px">${ev.full} dragged the region's lowest life expectancy down sharply.</div>`, e))
+          .on("mouseleave", App.util.tooltip.hide);
+      }
+
       // selected-country overlay inside its own region panel
       if (S.s.selectedCountry) {
         const recs = (S.s.byCountry.get(S.s.selectedCountry) || []).filter(d => d.life_expectancy != null);
@@ -163,5 +205,21 @@ App.charts.v6 = (function () {
     box.append("div").attr("class", "legend-note").text("The dashed vertical line marks the selected year.");
   }
 
-  return { init };
+  /* right-side explainer, revealed only when expanded (CSS hides it in the grid) */
+  function buildExplain(root) {
+    root.append("div").attr("class", "explain-panel").html(
+      `<h4>How to read this</h4>
+       <p>One panel per region. The <b>line</b> is the median country's life expectancy; the <b>shaded band</b> is the
+          spread from the region's <b>lowest</b> to <b>highest</b> country.</p>
+       <p>A band that <b>narrows over time</b> = countries converging on similarly long lives — the health goal. A sudden
+          <b>dip in the floor</b> = a country crisis dragging the minimum down:</p>
+       <ul class="explain-events">
+         <li><b>East Asia ~1977</b> — Cambodia (Khmer Rouge)</li>
+         <li><b>Sub-Saharan ~1994</b> — Rwandan genocide</li>
+         <li><b>Americas 2010</b> — Haiti earthquake</li>
+       </ul>
+       <p class="explain-foot">Switch to “Combined” to overlay all six regions on one axis.</p>`);
+  }
+
+  return { init, setWide };
 })();

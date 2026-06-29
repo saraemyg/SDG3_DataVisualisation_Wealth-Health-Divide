@@ -160,17 +160,17 @@ App.charts.v5 = (function () {
 
   function buildLegend() {
     legendBox.html("");
-    const box = legendBox.append("div").attr("class", "v5-legend-box");
-    
+    const box = legendBox.append("div").attr("class", "v5-legend-box collapsed");  // minimized by default
+
     const header = box.append("div").attr("class", "v5-legend-header")
       .style("display", "flex")
       .style("justify-content", "space-between")
       .style("align-items", "center")
       .style("cursor", "pointer")
       .style("user-select", "none");
-      
+
     header.append("div").attr("class", "v5-legend-title").text("Legend");
-    const toggle = header.append("span").attr("class", "v5-legend-toggle").text("−");
+    const toggle = header.append("span").attr("class", "v5-legend-toggle").text("+");
 
     const items = box.append("div").attr("class", "v5-legend-items");
     S.s.meta.regions.forEach(rg => {

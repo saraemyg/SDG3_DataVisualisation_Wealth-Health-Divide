@@ -134,6 +134,16 @@
       d3.select(this).classed("active", open).attr("aria-expanded", open);
     });
 
+    // --- header minimise / maximise toggle: collapses the standfirst + controls to free chart space ---
+    d3.select("#header-toggle").on("click", function () {
+      const collapsed = !d3.select(".app-header").classed("collapsed");
+      d3.select(".app-header").classed("collapsed", collapsed);
+      d3.select(this).text(collapsed ? "▾" : "▴")
+        .attr("aria-expanded", !collapsed)
+        .attr("aria-label", collapsed ? "Show the header" : "Minimise the header")
+        .attr("title", collapsed ? "Show the header" : "Minimise the header");
+    });
+
     // selection readout + search box react to linked selection
     S.on("select", "header", function (c) {
       updateSelectionReadout(c);
@@ -176,7 +186,7 @@
         this.title = me ? "Collapse" : "Expand";
       });
       // charts that benefit from more horizontal room re-lay-out wider when expanded
-      ["v1", "v2", "v5"].forEach(cid => {
+      ["v1", "v2", "v5", "v6"].forEach(cid => {
         if (App.charts[cid] && App.charts[cid].setWide) App.charts[cid].setWide(cid === id);
       });
     }

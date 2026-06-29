@@ -151,17 +151,17 @@ App.charts.v1 = (function () {
   function buildLegend() {
     d3.select("#legend-v1").html("");
     legendBox.html("");
-    const box = legendBox.append("div").attr("class", "v1-legend-box");
-    
+    const box = legendBox.append("div").attr("class", "v1-legend-box collapsed");  // minimized by default
+
     const header = box.append("div").attr("class", "v1-legend-header")
       .style("display", "flex")
       .style("justify-content", "space-between")
       .style("align-items", "center")
       .style("cursor", "pointer")
       .style("user-select", "none");
-      
+
     header.append("div").attr("class", "v1-legend-title").text("Legend");
-    const toggle = header.append("span").attr("class", "v1-legend-toggle").text("−");
+    const toggle = header.append("span").attr("class", "v1-legend-toggle").text("+");
 
     const items = box.append("div").attr("class", "v1-legend-items");
     S.s.meta.regions.forEach(rg => {
