@@ -8,26 +8,42 @@
 window.App = window.App || {};
 App.charts = App.charts || {};
 App.charts.v2 = (function () {
-  const W = 540, H = 400, M = { top: 26, right: 104, bottom: 40, left: 46 };
-  const iW = W - M.left - M.right, iH = H - M.top - M.bottom;
+  const H = 400, NARROW = 540, M = { top: 26, right: 104, bottom: 40, left: 46 };
   const S = App.state;
   const OUTCOMES = {
     life: { key: "life_expectancy", label: "Life expectancy", unit: "yrs", betterUp: true },
     child: { key: "infant_mortality", label: "Child mortality", unit: "per 1,000", betterUp: false }
   };
-  let svg, g, x, y, mode = "life", guide, guideLabel;
+  // world events that may sit behind the dips in the bloc lines (markers shown only when expanded)
+  const EVENTS = [
+    { year: 1980, label: "Iran–Iraq war begins — hits OPEC states (Iran, Iraq)." },
+    { year: 1991, label: "Gulf War; the USSR dissolves — life expectancy fell sharply across ex-Soviet (“Other”) states." },
+    { year: 2011, label: "Arab Spring — conflict in Libya, Syria and Yemen (OPEC / MENA)." }
+  ];
+  let svg, g, x, y, mode = "life", guide, guideLabel, W = NARROW, iW, iH;
 
   function init() {
+    const root = d3.select("#v2");
     buildControls();
-    svg = d3.select("#v2").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
-    g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
-    x = d3.scaleLinear().domain([S.s.meta.yearMin, S.s.meta.yearMax]).range([0, iW]);
-    y = d3.scaleLinear().range([iH, 0]);
+    svg = root.append("svg");
+    g = svg.append("g");
+    buildExplain(root);
     buildLegend();
     render();
     S.on("year", "v2", moveGuide);
     S.on("filter", "v2", render);
     S.on("select", "v2", render);
+  }
+
+  /* widen the timeline when the chart is expanded so the 50-year history isn't cramped */
+  function setWide(on) {
+    if (on) {
+      const el = document.getElementById("v2");
+      const cw = el.clientWidth, ch = el.clientHeight;
+      const aspect = (cw > 60 && ch > 60) ? Math.min(2.8, Math.max(1.6, cw / ch)) : 2.1;
+      W = Math.round(H * aspect);
+    } else { W = NARROW; }
+    render();
   }
 
   function passRegion(d) { return !S.s.activeRegions || S.s.activeRegions.has(d.region); }
@@ -42,6 +58,14 @@ App.charts.v2 = (function () {
   }
 
   function render() {
+    // when expanded, reserve a right gutter for the explainer panel so it never covers the lines
+    const mRight = (W > NARROW) ? 252 : M.right;
+    iW = W - M.left - mRight; iH = H - M.top - M.bottom;
+    svg.attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
+    g.attr("transform", `translate(${M.left},${M.top})`);
+    x = d3.scaleLinear().domain([S.s.meta.yearMin, S.s.meta.yearMax]).range([0, iW]);
+    y = d3.scaleLinear().range([iH, 0]);
+
     const out = OUTCOMES[mode];
     const data = series(out.key);
     const allVals = data.flatMap(s => s.pts.map(p => p.val));
@@ -99,8 +123,36 @@ App.charts.v2 = (function () {
       .style("cursor", "crosshair")
       .on("mousemove", (e) => hover(e, data, out))
       .on("mouseleave", () => { App.util.tooltip.hide(); moveGuide(S.s.currentYear); });
+    if (W > NARROW) drawEvents();   // historical context markers — only when expanded
     moveGuide(S.s.currentYear);
     setInsight(data, out);
+  }
+
+  /* dashed vertical markers at notable world events (hover for the story) */
+  function drawEvents() {
+    EVENTS.forEach(ev => {
+      if (ev.year < S.s.meta.yearMin || ev.year > S.s.meta.yearMax) return;
+      const xx = x(ev.year);
+      const grp = g.append("g").attr("class", "event-marker").style("cursor", "help");
+      grp.append("line").attr("x1", xx).attr("x2", xx).attr("y1", 0).attr("y2", iH)
+        .attr("stroke", "#8a8a8a").attr("stroke-dasharray", "2 3").attr("opacity", 0.75);
+      grp.append("text").attr("x", xx).attr("y", -2).attr("text-anchor", "middle")
+        .attr("font-size", 9.5).attr("font-weight", 600).attr("fill", "#777").text(ev.year);
+      grp.append("rect").attr("x", xx - 7).attr("y", 0).attr("width", 14).attr("height", iH).attr("fill", "transparent")
+        .on("mousemove", e => App.util.tooltip.show(
+          `<div class="tt-title">${ev.year}</div><div class="tt-sub" style="white-space:normal;max-width:210px">${ev.label}</div>`, e))
+        .on("mouseleave", App.util.tooltip.hide);
+    });
+  }
+
+  /* right-side explainer, revealed only when expanded (CSS hides it in the grid) */
+  function buildExplain(root) {
+    const evHtml = EVENTS.map(e => `<li><b>${e.year}</b> — ${e.label.replace(/ —.*$/, "")}</li>`).join("");
+    root.append("div").attr("class", "explain-panel").html(
+      `<h4>How to read this</h4>
+       <p>Each line is the <b>median</b> country in that economic bloc. Lines drifting <b>together</b> = the rich–poor health gap closing; staying apart = it persists.</p>
+       <p>Dashed markers flag world events that may sit behind the dips (hover a marker on the chart):</p>
+       <ul class="explain-events">${evHtml}</ul>`);
   }
 
 
@@ -161,5 +213,5 @@ App.charts.v2 = (function () {
     box.append("div").attr("class", "legend-note").text("Each line shows the median value for that bloc in each year.");
   }
 
-  return { init };
+  return { init, setWide };
 })();

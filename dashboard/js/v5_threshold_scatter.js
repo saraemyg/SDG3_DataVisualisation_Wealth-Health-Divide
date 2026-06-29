@@ -102,14 +102,27 @@ App.charts.v5 = (function () {
       const seg = pts.filter(d => d.gdp_per_capita >= edges[i] && d.gdp_per_capita < edges[i + 1]);
       if (seg.length >= 8) curve.push({ gdp: Math.sqrt(edges[i] * edges[i + 1]), m: d3.median(seg, d => d.infant_mortality) });
     }
+    const lineGen = d3.line().x(d => x(d.gdp)).y(d => y(d.m)).curve(d3.curveCatmullRom);
     g.append("path").datum(curve).attr("fill", "none").attr("stroke", "#555").attr("stroke-width", 2.2)
-      .attr("opacity", 0.6).attr("d", d3.line().x(d => x(d.gdp)).y(d => y(d.m)).curve(d3.curveCatmullRom));
-    // label the curve from open space (upper area) with a leader line, so it never collides
-    // with the continent blobs/labels lower down
+      .attr("opacity", 0.6).attr("d", lineGen);
+    // invisible fat hit-line on top so you can HOVER the grey curve to read its value
+    g.append("path").datum(curve).attr("fill", "none").attr("stroke", "transparent").attr("stroke-width", 16)
+      .attr("pointer-events", "stroke").style("cursor", "crosshair").attr("d", lineGen)
+      .on("mousemove", function (e) {
+        const px = d3.pointer(e, g.node())[0];
+        const gdp = x.invert(px);
+        const pt = curve.reduce((a, b) => Math.abs(b.gdp - gdp) < Math.abs(a.gdp - gdp) ? b : a);
+        App.util.tooltip.show(
+          `<div class="tt-title">Typical level (median)</div>` +
+          `<div class="tt-sub">around $${d3.format(",.0f")(pt.gdp)} per person</div>` +
+          `<table><tr><td>Child mortality</td><td>${pt.m.toFixed(1)} / 1,000</td></tr></table>`, e);
+      })
+      .on("mouseleave", App.util.tooltip.hide);
+    // label the curve from open space (upper area) with a leader line
     const anchor = curve[Math.round(curve.length * 0.32)];
     if (anchor) App.util.annotate(g, {
       x: x(700), y: y(185), anchor: "start",
-      text: ["Grey curve = typical level", "(median deaths for that income)"],
+      text: ["Grey curve = typical level", "(hover it to read the value)"],
       leaderTo: [x(anchor.gdp), y(anchor.m)], color: "#666"
     });
   }
@@ -133,8 +146,8 @@ App.charts.v5 = (function () {
     applyHighlight(S.s.selectedCountry);
     d3.select("#insight-v5").html(
       `Each dot is a country in ${yr} (size = population, colour = continent). Child deaths fall steeply with income up to ` +
-      `≈ <b>$${d3.format(",.0f")(threshold.value)}</b>, then barely move. The shaded blobs show each continent clusters ` +
-      `in a different corner — Sub-Saharan Africa low-income/high-mortality, Europe the opposite.`);
+      `≈ <b>$${d3.format(",.0f")(threshold.value)}</b>, then barely move. Hover the grey curve to read the typical level ` +
+      `at any income — dots above it do worse than expected, below do better.`);
   }
 
   function applyHighlight(country) {

@@ -53,6 +53,8 @@ App.charts.v4 = (function () {
     byIso = new Map(recs.map(d => [d.iso_numeric, d]));
     gMap.selectAll("path").transition().duration(App.config.transition * 0.6)
       .attr("fill", f => { const d = byIso.get(f.id); return d ? App.scales.infantColor(d.infant_mortality) : "#e9e9e9"; });
+    // only data-bearing countries are interactive (pointer cursor); grey ones stay inert
+    gMap.selectAll("path").style("cursor", f => byIso.get(f.id) ? "pointer" : "default");
     applyHighlight(S.s.selectedCountry);
     buildGapPanel(recs, year);
   }
@@ -163,8 +165,9 @@ App.charts.v4 = (function () {
 
   function onHover(e, f) {
     const d = byIso.get(f.id);
+    // countries/territories with no data for this year stay silent (no "no data" tooltip)
     if (d) App.util.tooltip.show(App.util.countryTooltip(d, currentYear), e);
-    else App.util.tooltip.show(`<div class="tt-title">${f.properties.name}</div><div class="tt-sub">no data for ${currentYear}</div>`, e);
+    else App.util.tooltip.hide();
   }
   function onClick(e, f) { const d = byIso.get(f.id); if (d) S.selectCountry(d.country); }
 

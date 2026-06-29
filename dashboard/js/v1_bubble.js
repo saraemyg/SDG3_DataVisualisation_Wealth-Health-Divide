@@ -97,11 +97,39 @@ App.charts.v1 = (function () {
       exit => exit.call(ex => ex.transition().duration(dur).attr("r", 0).remove())
     );
 
+    drawAnnotation(data);
     applyHighlight(S.s.selectedCountry);
     setInsight(data, year);
   }
 
+  /* call out the two corners of the story: the rich & long-lived cluster (mostly OECD, top-right)
+   * and the poor & short-lived cluster (mostly Sub-Saharan Africa, bottom-left). Redrawn each
+   * frame so the labels follow the clusters as the years play. */
+  function drawAnnotation(data) {
+    g.selectAll(".annotation").remove();
+    const meanPt = arr => [d3.mean(arr, d => x(d.gdp_per_capita)), d3.mean(arr, d => y(d.life_expectancy))];
 
+    const oecd = data.filter(d => d.bloc === "OECD");
+    if (oecd.length >= 3) {
+      const [cx, cy] = meanPt(oecd);
+      // place the label in the open upper-left (no rich-yet-short-lived countries live there),
+      // with a leader to the OECD cluster — keeps clear of the top-right legend box
+      App.util.annotate(g, {
+        x: x(650), y: 15, anchor: "start",
+        text: ["Rich & long-lived →", "mostly OECD nations"], leaderTo: [cx, cy], color: "#5E4FA2"
+      });
+    }
+    // poorest cluster = the lowest-income Sub-Saharan Africa countries
+    const ssa = data.filter(d => d.region === "Sub-Saharan Africa" && d.gdp_per_capita != null);
+    if (ssa.length >= 3) {
+      const poor = ssa.slice().sort((a, b) => a.gdp_per_capita - b.gdp_per_capita).slice(0, Math.max(5, Math.round(ssa.length * 0.4)));
+      const [cx, cy] = meanPt(poor);
+      App.util.annotate(g, {
+        x: Math.max(2, cx - 18), y: iH - 6, anchor: "start",
+        text: ["Poor & short-lived", "mostly Sub-Saharan Africa"], leaderTo: [cx, cy], color: "#0a6ea8"
+      });
+    }
+  }
 
   function applyHighlight(country) {
     const circles = g.select(".bubbles").selectAll("circle");

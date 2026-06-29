@@ -14,14 +14,28 @@ App.charts.v3 = (function () {
   let svg, g, x, y;
 
   function init() {
-    svg = d3.select("#v3").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
+    const root = d3.select("#v3");
+    svg = root.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", W).attr("height", H);
     g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
     x = d3.scaleLinear().domain([-1, 1]).range([0, iW]);
     y = d3.scaleBand().range([0, iH]).padding(0.34);
+    buildExplain(root);
     buildLegend();
     render();
     S.on("year", "v3", render);
     S.on("filter", "v3", render);
+  }
+
+  /* right-side explainer, revealed only when the chart is expanded (CSS hides it in the grid) */
+  function buildExplain(root) {
+    root.append("div").attr("class", "explain-panel").html(
+      `<h4>How to read this</h4>
+       <p>Each bar is one factor's <b>correlation</b> with life expectancy across all countries in the chosen year.</p>
+       <p><b style="color:${App.config.goodColor}">Green →</b> more of it goes with a <b>longer</b> life;
+          <b style="color:${App.config.badColor}">← red</b> goes with a <b>shorter</b> life. A longer bar = a stronger link.</p>
+       <p><b>Association, not proof of cause.</b> Richer countries also spend more on health, so several factors overlap —
+          and a factor's link can change sign over time. Read the bars as "what moves together", not "what causes what".</p>
+       <p class="explain-foot">Drag the year to see the links change over time.</p>`);
   }
 
   function pearson(pairs) {

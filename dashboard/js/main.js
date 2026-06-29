@@ -24,9 +24,7 @@
     setupFocus();
     updateSelectionReadout(null);
     buildStandfirst(bundle.meta);
-    document.getElementById("footer-meta").textContent =
-      `CDS6324 · TT2L · SDG 3 · D3.js v7 · ${bundle.meta.nRecords.toLocaleString()} records · ` +
-      `${bundle.meta.nCountries} countries · ${bundle.meta.yearMin}–${bundle.meta.yearMax}`;
+    // footer (group members + IDs) is static in index.html — not overwritten here
   }).catch(function (err) {
     console.error(err);
     fail(err && err.message ? err.message : String(err));
@@ -41,7 +39,7 @@
     };
     const oecd = mean("OECD"), opec = mean("OPEC");
     const thr = (App.charts.v5 && App.charts.v5.threshold) ? App.charts.v5.threshold() : null;
-    let txt = `<b>The pattern:</b><span class="info-badge" id="pattern-info" tabindex="0">i</span> as countries grow richer, fewer of their children die — `;
+    let txt = `<span class="info-badge" id="pattern-info" tabindex="0">i</span> <b>The pattern:</b> as countries grow richer, fewer of their children die — `;
     if (thr) txt += `but most of that gain happens below about <b>$${d3.format(",.0f")(thr)} per person</b>; ` +
       "beyond that, extra wealth barely moves the needle. ";
     if (oecd && opec) txt += `Even so, in ${meta.yearMax} people in wealthy <b>OECD</b> nations still lived about ` +
@@ -129,6 +127,13 @@
     // --- reset-to-default button ---
     d3.select("#reset-btn").on("click", resetAll);
 
+    // --- 💡 "How to read" toggle: the quick-guide is hidden until this is clicked ---
+    d3.select("#guide-toggle").on("click", function () {
+      const open = !d3.select("#quick-guide").classed("open");
+      d3.select("#quick-guide").classed("open", open);
+      d3.select(this).classed("active", open).attr("aria-expanded", open);
+    });
+
     // selection readout + search box react to linked selection
     S.on("select", "header", function (c) {
       updateSelectionReadout(c);
@@ -171,7 +176,7 @@
         this.title = me ? "Collapse" : "Expand";
       });
       // charts that benefit from more horizontal room re-lay-out wider when expanded
-      ["v1", "v5"].forEach(cid => {
+      ["v1", "v2", "v5"].forEach(cid => {
         if (App.charts[cid] && App.charts[cid].setWide) App.charts[cid].setWide(cid === id);
       });
     }

@@ -41,7 +41,8 @@ App.config = {
   // (Outcome metrics like under-5 / neonatal mortality are excluded — they ARE the outcome.)
   drivers: [
     { key: "gdp_per_capita", label: "GDP per person" },
-    { key: "health_expenditure", label: "Health spending" },
+    { key: "health_expenditure", label: "Gov. health spend" },
+    { key: "ncd_cardiovascular_pct", label: "Cardiovascular deaths" },
     { key: "fertility", label: "Fertility rate" },
     { key: "tb_incidence", label: "TB cases" },
     { key: "malaria_incidence", label: "Malaria cases" },
