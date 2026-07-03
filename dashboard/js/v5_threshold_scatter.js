@@ -15,17 +15,17 @@ App.charts.v5 = (function () {
     "Europe & Central Asia": "Europe", "Americas": "Americas", "East Asia & Pacific": "E Asia/Pac",
     "South Asia": "South Asia", "Middle East & North Africa": "MENA", "Sub-Saharan Africa": "Sub-Sah. Africa"
   };
-  let svg, g, x, y, rPop, threshold, W = NARROW, iW, iH, legendBox;
+  let svg, g, x, y, rPop, threshold, W = NARROW, iW, iH, side;
 
   function init() {
     const root = d3.select("#v5");
-    root.selectAll(".v5-legend").remove();
-    legendBox = root.append("div").attr("class", "v5-legend");
+    root.selectAll(".v5-legend, .v5-side").remove();
     svg = root.append("svg");
     g = svg.append("g");
+    side = root.append("div").attr("class", "v5-side");   // right column: legend + explanation (expanded only)
     rPop = d3.scaleSqrt().domain([0, App.scales.domains.population[1]]).range([2.5, 12]);
-    buildLegend();
-    build();
+    build();          // computes `threshold` (needed by buildSide) and draws the plot
+    buildSide();
     S.on("year", "v5", render);
     S.on("filter", "v5", render);
     S.on("select", "v5", applyHighlight);
@@ -118,13 +118,13 @@ App.charts.v5 = (function () {
           `<table><tr><td>Child mortality</td><td>${pt.m.toFixed(1)} / 1,000</td></tr></table>`, e);
       })
       .on("mouseleave", App.util.tooltip.hide);
-    // label the curve from open space (upper area) with a leader line
-    const anchor = curve[Math.round(curve.length * 0.32)];
-    if (anchor) App.util.annotate(g, {
-      x: x(700), y: y(185), anchor: "start",
-      text: ["Grey curve = typical level", "(hover it to read the value)"],
-      leaderTo: [x(anchor.gdp), y(anchor.m)], color: "#666"
-    });
+    // very soft label sitting right on the curve toward the right side (no leader line)
+    const lab = curve[Math.min(curve.length - 1, Math.round(curve.length * 0.6))];
+    if (lab) g.append("text")
+      .attr("x", x(lab.gdp)).attr("y", y(lab.m) - 6)
+      .attr("text-anchor", "middle").attr("class", "anno-text")
+      .attr("font-size", 8.5).attr("font-style", "italic").attr("font-weight", 400)
+      .attr("fill", "#c4c4c4").text("typical level (hover to read)");
   }
 
   function render() {
@@ -158,40 +158,44 @@ App.charts.v5 = (function () {
       .filter(d => country && d.country === country).raise();
   }
 
-  function buildLegend() {
-    legendBox.html("");
-    const box = legendBox.append("div").attr("class", "v5-legend-box collapsed");  // minimized by default
+  /* right-hand side column (expanded only): the insights + a legend that explains the blue
+     band, the grey curve, colour and size. */
+  function buildSide() {
+    side.html("");
+    const thr = "$" + d3.format(",.0f")(threshold.value);
+    side.append("div").html(
+      `<h4>Does money buy survival?</h4>
+       <p>Each dot is a country: <b>right = richer</b> (GDP per person, log scale), <b>up = more children die</b>
+          (per 1,000 births), <b>bigger = more people</b>, colour = region.</p>
+       <p><b>The insight:</b> child deaths fall <b>steeply</b> as countries rise out of poverty, then <b>flatten</b>.
+          Beyond about <b>${thr} per person</b> extra wealth barely lowers child mortality. So the biggest life-saving
+          gains come from lifting the <b>poorest</b> countries a little — not from making rich countries richer.</p>
+       <p><b>The blue band</b> is that <b>tipping-point zone</b> (roughly $1.5k–$8k income): the range where mortality
+          stops falling fast. <b>Left</b> of it, small income gains save many lives; <b>right</b> of it, they barely
+          move the needle.</p>
+       <p><b>The grey curve</b> is the <b>typical (median) level</b> at each income — hover it to read a value. Dots
+          <b>above</b> it do <b>worse</b> than expected for their income; dots <b>below</b> do <b>better</b>.</p>
+       <p class="explain-foot">Association, not proof: income buys the means to survive — clean water, nutrition,
+          vaccines, clinics — up to a point.</p>`);
 
-    const header = box.append("div").attr("class", "v5-legend-header")
-      .style("display", "flex")
-      .style("justify-content", "space-between")
-      .style("align-items", "center")
-      .style("cursor", "pointer")
-      .style("user-select", "none");
-
-    header.append("div").attr("class", "v5-legend-title").text("Legend");
-    const toggle = header.append("span").attr("class", "v5-legend-toggle").text("+");
-
-    const items = box.append("div").attr("class", "v5-legend-items");
+    const leg = side.append("div").attr("class", "v1-side-legend");
+    leg.append("div").attr("class", "v1-side-legend-title").text("How to read the marks");
     S.s.meta.regions.forEach(rg => {
-      const row = items.append("div").attr("class", "v5-legend-item");
-      row.append("span").attr("class", "v5-legend-swatch").style("background", App.scales.region(rg));
+      const row = leg.append("div").attr("class", "v1-legend-item");
+      row.append("span").attr("class", "v1-legend-swatch").style("background", App.scales.region(rg));
       row.append("span").text(shortRegion[rg] || rg);
     });
-    const sizeRow = items.append("div").attr("class", "v5-legend-item v5-size-item");
-    sizeRow.append("span")
-      .attr("class", "v5-legend-swatch v5-size-swatch")
-      .style("width", "16px")
-      .style("height", "16px")
-      .style("border-radius", "50%")
-      .style("background", "#b6d9f2");
+    const sizeRow = leg.append("div").attr("class", "v1-legend-item");
+    sizeRow.append("span").attr("class", "v1-legend-swatch")
+      .style("width", "16px").style("height", "16px").style("background", "#b6d9f2");
     sizeRow.append("span").text("Bigger point = more people");
-
-    header.on("click", () => {
-      const collapsed = box.classed("collapsed");
-      box.classed("collapsed", !collapsed);
-      toggle.text(collapsed ? "−" : "+");
-    });
+    const bandRow = leg.append("div").attr("class", "v1-legend-item");
+    bandRow.append("span").attr("class", "swatch-band");
+    bandRow.append("span").text("Blue band = tipping-point income zone");
+    const curveRow = leg.append("div").attr("class", "v1-legend-item");
+    curveRow.append("span").attr("class", "v1-legend-swatch")
+      .style("width", "16px").style("height", "0").style("border-top", "2px solid #999").style("border-radius", "0");
+    curveRow.append("span").text("Grey curve = typical (median) level");
   }
 
   return { init, setWide, threshold: () => threshold.value };

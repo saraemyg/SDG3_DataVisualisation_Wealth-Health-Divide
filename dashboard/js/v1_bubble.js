@@ -12,16 +12,16 @@ App.charts.v1 = (function () {
     "Europe & Central Asia": "Europe", "Americas": "Americas", "East Asia & Pacific": "E Asia/Pac",
     "South Asia": "South Asia", "Middle East & North Africa": "MENA", "Sub-Saharan Africa": "Sub-Sah. Africa"
   };
-  let svg, g, x, y, r, yearText, W = NARROW, iW, iH, legendBox;
+  let svg, g, x, y, r, yearText, W = NARROW, iW, iH, side;
 
   function init() {
     const root = d3.select("#v1");
-    root.selectAll(".v1-legend").remove();
-    legendBox = root.append("div").attr("class", "v1-legend");
+    root.selectAll(".v1-legend, .v1-side").remove();
     svg = root.append("svg");
     g = svg.append("g");
+    side = root.append("div").attr("class", "v1-side");   // right column (legend + explanation), expanded only
     r = App.scales.popR(38);              // population->radius (width-independent)
-    buildLegend();                        // size key uses r (built once)
+    buildSide();                          // legend + regional explanation into the side column
     build();
     S.on("year", "v1", render);
     S.on("filter", "v1", () => render(S.s.currentYear));
@@ -131,6 +131,38 @@ App.charts.v1 = (function () {
     }
   }
 
+  /* right-hand side column (shown only when expanded): the regional wealth–health story + legend */
+  function buildSide() {
+    side.html("");
+    const euro = App.scales.region("Europe & Central Asia"), ssa = App.scales.region("Sub-Saharan Africa");
+    side.append("div").html(
+      `<h4>The wealth–health curve</h4>
+       <p>Each bubble is a country: <b>right = richer</b> (GDP per person, ×5 log scale),
+          <b>up = longer-lived</b>, <b>bigger = more people</b>. The cloud bends like a curve — the
+          <b>Preston curve</b>.</p>
+       <p><b>Regions sit in very different places.</b>
+          <b style="color:${euro}">Europe &amp; Central Asia</b> clusters top-right: high income, ~80-year
+          lives, strong health systems, clean water and near-universal vaccination.
+          <b style="color:${ssa}">Sub-Saharan Africa</b> clusters bottom-left: low income, shorter lives, and
+          a heavier disease burden (malaria, HIV, childbirth risks) with far fewer doctors and clinics.</p>
+       <p><b>Why wealth tracks health:</b> richer countries can afford the things that keep people alive —
+          nutrition, sanitation, medicines, skilled care. But past roughly <b>$15–20k</b> the curve
+          <b>flattens</b>: extra wealth adds little, so <b>how</b> money is spent matters more than how much.</p>
+       <p class="explain-foot">Association, not proof. Press ▶ to watch countries climb from 1960 to 2011.</p>`);
+
+    const leg = side.append("div").attr("class", "v1-side-legend");
+    leg.append("div").attr("class", "v1-side-legend-title").text("Colour = region · size = population");
+    S.s.meta.regions.forEach(rg => {
+      const row = leg.append("div").attr("class", "v1-legend-item");
+      row.append("span").attr("class", "v1-legend-swatch").style("background", App.scales.region(rg));
+      row.append("span").text(shortRegion[rg] || rg);
+    });
+    const sizeRow = leg.append("div").attr("class", "v1-legend-item");
+    sizeRow.append("span").attr("class", "v1-legend-swatch")
+      .style("width", "16px").style("height", "16px").style("background", "#b6d9f2");
+    sizeRow.append("span").text("Bigger point = more people");
+  }
+
   function applyHighlight(country) {
     const circles = g.select(".bubbles").selectAll("circle");
     if (!country) { circles.classed("dimmed", false).classed("selected-stroke", false); return; }
@@ -146,43 +178,6 @@ App.charts.v1 = (function () {
     let txt = `In ${year}, each bubble is a country (area = population). `;
     if (lo && lp) txt += `Mean life expectancy: OECD ${lo.toFixed(1)} yrs vs OPEC ${lp.toFixed(1)} yrs — a ${(lo - lp).toFixed(1)}-year gap. Press ▶ to watch it evolve.`;
     d3.select("#insight-v1").text(txt);
-  }
-
-  function buildLegend() {
-    d3.select("#legend-v1").html("");
-    legendBox.html("");
-    const box = legendBox.append("div").attr("class", "v1-legend-box collapsed");  // minimized by default
-
-    const header = box.append("div").attr("class", "v1-legend-header")
-      .style("display", "flex")
-      .style("justify-content", "space-between")
-      .style("align-items", "center")
-      .style("cursor", "pointer")
-      .style("user-select", "none");
-
-    header.append("div").attr("class", "v1-legend-title").text("Legend");
-    const toggle = header.append("span").attr("class", "v1-legend-toggle").text("+");
-
-    const items = box.append("div").attr("class", "v1-legend-items");
-    S.s.meta.regions.forEach(rg => {
-      const row = items.append("div").attr("class", "v1-legend-item");
-      row.append("span").attr("class", "v1-legend-swatch").style("background", App.scales.region(rg));
-      row.append("span").text(shortRegion[rg] || rg);
-    });
-    const sizeRow = items.append("div").attr("class", "v1-legend-item v1-size-item");
-    sizeRow.append("span")
-      .attr("class", "v1-legend-swatch v1-size-swatch")
-      .style("width", "16px")
-      .style("height", "16px")
-      .style("border-radius", "50%")
-      .style("background", "#b6d9f2");
-    sizeRow.append("span").text("Bigger point = more people");
-
-    header.on("click", () => {
-      const collapsed = box.classed("collapsed");
-      box.classed("collapsed", !collapsed);
-      toggle.text(collapsed ? "−" : "+");
-    });
   }
 
   return { init, setWide };

@@ -41,6 +41,7 @@ App.charts.v4 = (function () {
 
     buildLegend();
     buildScaleLegend();
+    buildExplain(root);
     render(S.s.currentYear);
     S.on("year", "v4", render);
     S.on("filter", "v4", () => render(currentYear));
@@ -64,7 +65,7 @@ App.charts.v4 = (function () {
     if (recs.length < 12) { panel.html(""); d3.select("#insight-v4").text(""); return; }
     const avg = (arr, k) => { const v = arr.filter(d => d[k] != null); return v.length ? d3.mean(v, d => d[k]) : null; };
     const byMort = recs.slice().sort((a, b) => a.infant_mortality - b.infant_mortality);
-    const best = byMort.slice(0, 10), worst = byMort.slice(-10);
+    const best = byMort.slice(0, 15), worst = byMort.slice(-15);
     const bestM = avg(best, "infant_mortality"), worstM = avg(worst, "infant_mortality");
     const bestG = avg(best, "gdp_per_capita"), worstG = avg(worst, "gdp_per_capita");
     const ssa = worst.filter(d => d.region === "Sub-Saharan Africa").length;
@@ -85,18 +86,18 @@ App.charts.v4 = (function () {
     const bodyHtml = `
       <div class="gap-grid">
         <div class="gap-col best" data-grp="best">
-          <div class="gap-lab">✅ 10 safest</div>
+          <div class="gap-lab">✅ 15 safest</div>
           <div class="gap-val">${bestM.toFixed(0)}<span> /1k</span></div>
           <div class="gap-gdp">${bestG ? moneyS(bestG) : "n/a"}/person</div>
         </div>
         <div class="gap-col worst" data-grp="worst">
-          <div class="gap-lab">⚠ 10 deadliest</div>
+          <div class="gap-lab">⚠ 15 deadliest</div>
           <div class="gap-val">${worstM.toFixed(0)}<span> /1k</span></div>
           <div class="gap-gdp">${worstG ? moneyS(worstG) : "n/a"}/person</div>
         </div>
       </div>
       <div class="gap-summary">${mortX ? `<b>${mortX.toFixed(0)}×</b> the child deaths` : ""}${gdpX ? ` · <b>${gdpX.toFixed(0)}×</b> less income` : ""}<br>
-        <b>${ssa}/10</b> deadliest are in Sub-Saharan Africa</div>
+        <b>${ssa}/15</b> deadliest are in Sub-Saharan Africa</div>
       <div class="region-bars"><div class="rb-head">Avg child mortality by region</div>${regHtml}</div>`;
 
     if (panelMode === "hidden") {
@@ -148,9 +149,9 @@ App.charts.v4 = (function () {
     }).on("mouseleave", clearSet);
 
     d3.select("#insight-v4").html(
-      `The <b>10 deadliest</b> countries have about <b>${mortX ? mortX.toFixed(0) : "?"}×</b> as many child deaths as the ` +
-      `<b>10 safest</b>, and their average income is about <b>${gdpX ? gdpX.toFixed(0) : "?"}× lower</b>. ` +
-      `${ssa} of those 10 are in Sub-Saharan Africa. Hover the panel to find them on the map.`);
+      `The <b>15 deadliest</b> countries have about <b>${mortX ? mortX.toFixed(0) : "?"}×</b> as many child deaths as the ` +
+      `<b>15 safest</b>, and their average income is about <b>${gdpX ? gdpX.toFixed(0) : "?"}× lower</b>. ` +
+      `${ssa} of those 15 are in Sub-Saharan Africa. Hover the panel to find them on the map.`);
   }
 
   function highlightSet(isoSet) {
@@ -176,6 +177,19 @@ App.charts.v4 = (function () {
       .attr("stroke", f => (country && byIso.get(f.id) && byIso.get(f.id).country === country) ? "#111" : "#fff")
       .attr("stroke-width", f => (country && byIso.get(f.id) && byIso.get(f.id).country === country) ? 1.8 : 0.4)
       .filter(f => country && byIso.get(f.id) && byIso.get(f.id).country === country).raise();
+  }
+
+  /* right-side explainer (revealed only when the tile is expanded) — the "why" behind the map */
+  function buildExplain(root) {
+    root.append("div").attr("class", "explain-panel").html(
+      `<h4>Why children die youngest here</h4>
+       <p>Child mortality clusters in the <b>poorest countries</b>, above all in <b>Sub-Saharan Africa</b> and
+          <b>South Asia</b> — the same places the wealth–health charts flag as low-income.</p>
+       <p>The deaths are mostly <b>preventable</b>: pneumonia, diarrhoea, malaria and newborn complications,
+          made worse by <b>malnutrition</b>. What's missing is <b>money and health systems</b> — vaccines,
+          skilled birth attendants, clean water and sanitation, and nearby clinics.</p>
+       <p class="explain-foot">This is why the map's dark band and the "×less income" gap line up: at low
+          incomes, small gains in wealth and health spending save many young lives.</p>`);
   }
 
   function buildLegend() {

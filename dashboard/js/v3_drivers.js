@@ -75,6 +75,9 @@ App.charts.v3 = (function () {
       .attr("font-size", 11).attr("font-weight", 700).attr("fill", App.config.goodColor).text("goes with LONGER life →");
     g.append("text").attr("x", 0).attr("y", -16).attr("text-anchor", "start")
       .attr("font-size", 11).attr("font-weight", 700).attr("fill", App.config.badColor).text("← SHORTER life");
+    // x-axis label (the bars encode correlation); y-axis is the list of health factors on the left
+    g.append("text").attr("class", "axis-title").attr("x", iW / 2).attr("y", iH + 20)
+      .attr("text-anchor", "middle").text("Correlation with life expectancy");
 
     // zero axis + faint vertical ticks at ±0.5/±1
     [-1, -0.5, 0.5, 1].forEach(t => g.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", 0).attr("y2", iH)

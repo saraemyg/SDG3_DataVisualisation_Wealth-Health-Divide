@@ -129,5 +129,16 @@ App.util = (function () {
     return out;
   }
 
-  return { tooltip, countryTooltip, discreteLegend, gradientLegend, sizeLegend, annotate, dodge };
+  /* Tooltip body for a world-event marker: title + (optional) Wikipedia photo + description.
+   * The photo is a remote Wikimedia thumbnail (shows only when online; `onerror` removes it so
+   * everything else still works offline). Clicking the marker opens the article (wired by charts). */
+  function eventTooltip(ev) {
+    let h = `<div class="tt-title">${ev.year}${ev.cause ? " — " + ev.cause : ""}</div>`;
+    if (ev.img) h += `<img class="tt-img" src="${ev.img}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">`;
+    h += `<div class="tt-sub" style="white-space:normal;max-width:240px">${ev.full || ev.label || ""}</div>`;
+    if (ev.wiki) h += `<div class="tt-link">Click the marker to open Wikipedia ↗</div>`;
+    return h;
+  }
+
+  return { tooltip, countryTooltip, eventTooltip, discreteLegend, gradientLegend, sizeLegend, annotate, dodge };
 })();

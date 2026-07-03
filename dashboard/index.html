@@ -11,7 +11,9 @@
 </head>
 <body>
   <!-- ===================== HEADER (compact — controls affect all 6 charts) ===================== -->
-  <header class="app-header">
+  <!-- starts collapsed: just the title + the headline finding + the round expand toggle;
+       clicking the toggle reveals the full controls row -->
+  <header class="app-header collapsed">
     <div class="header-top">
       <div class="title-block">
         <h1>The Wealth–Health Divide <span class="subtitle">Does money buy survival?</span></h1>
@@ -20,8 +22,8 @@
       <p class="standfirst" id="standfirst">Loading the data…</p>
       <button id="guide-toggle" class="guide-toggle" aria-expanded="false" aria-controls="quick-guide"
               title="Show / hide how to read this dashboard">💡 How to read</button>
-      <button id="header-toggle" class="header-toggle" aria-expanded="true"
-              aria-label="Minimise the header" title="Minimise the header">▴</button>
+      <button id="header-toggle" class="header-toggle" aria-expanded="false"
+              aria-label="Show the controls" title="Show the controls">▾</button>
     </div>
 
     <div class="quick-guide" id="quick-guide" aria-label="How to read the dashboard">
@@ -68,16 +70,19 @@
         <label>&nbsp;</label>
         <button id="reset-btn" class="reset-btn" title="Clear year, filters and selection">↺ Reset</button>
       </div>
-      <div class="how-to">
-        <span><b>Hover</b> for numbers</span>
-        <span><b>Click</b> a country to spotlight it everywhere</span>
-        <span><b>⤢</b> expand any chart</span>
-      </div>
     </div>
   </header>
 
   <!-- ===================== FULLSCREEN OVERVIEW GRID (all 6 at a glance) ===================== -->
   <main class="dashboard" id="dashboard">
+    <!-- story columns: each column answers one analytical question (Q1 → Q2 → Q3) -->
+    <div class="q-header q1"><span class="q-tag">Q1 · The Wealth Divide</span>
+      <span class="q-take">Do industrial (OECD) vs resource-export (OPEC) economies diverge in health?</span></div>
+    <div class="q-header q2"><span class="q-tag">Q2 · The GDP Threshold</span>
+      <span class="q-take">Is there an income tipping point for survival — and who is still below it?</span></div>
+    <div class="q-header q3"><span class="q-tag">Q3 · Regional Convergence</span>
+      <span class="q-take">Are regions catching up, or is geography still destiny?</span></div>
+
     <section class="card" id="card-v1">
       <button class="expand-btn" data-card="v1" title="Expand / collapse">⤢</button>
       <div class="card-head">

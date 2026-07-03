@@ -10,12 +10,29 @@ App.charts.v6 = (function () {
   const NARROW = 540, H = 410;
   const S = App.state;
   // per-region crisis markers drawn ON the panels (the dips in the band's floor)
+  const WIKI = "https://en.wikipedia.org/wiki/";
+  const IMG = "https://upload.wikimedia.org/wikipedia/commons/thumb/";
   const EVENTS = {
-    "East Asia & Pacific": { year: 1977, cause: "Cambodia", full: "Cambodia (Khmer Rouge)" },
-    "Sub-Saharan Africa": { year: 1994, cause: "Rwanda", full: "Rwandan genocide" },
-    "Americas": { year: 2010, cause: "Haiti", full: "Haiti earthquake" }
+    "East Asia & Pacific": [
+      { year: 1977, cause: "Cambodia", full: "Cambodian genocide (Khmer Rouge, 1975–79) dragged the region's lowest life expectancy down sharply.",
+        wiki: WIKI + "Cambodian_genocide", img: IMG + "c/c9/Skulls_from_the_killing_fields.jpg/330px-Skulls_from_the_killing_fields.jpg" }
+    ],
+    "Americas": [
+      { year: 2010, cause: "Haiti", full: "2010 Haiti earthquake — a sudden fall in Haiti's life expectancy.",
+        wiki: WIKI + "2010_Haiti_earthquake", img: null }
+    ],
+    "Sub-Saharan Africa": [
+      { year: 1968, cause: "Biafra", full: "Nigerian Civil War / Biafra famine (1967–70) — mass starvation, especially of children.",
+        wiki: WIKI + "Nigerian_Civil_War", img: IMG + "c/c5/Godwin_Alabi-Isama1.jpg/330px-Godwin_Alabi-Isama1.jpg" },
+      { year: 1984, cause: "Ethiopia", full: "1983–85 famine in Ethiopia — one of the worst famines of the 20th century.",
+        wiki: WIKI + "1983%E2%80%931985_famine_in_Ethiopia", img: IMG + "b/b9/Opbushel.jpg/330px-Opbushel.jpg" },
+      { year: 1994, cause: "Rwanda", full: "Rwandan genocide (1994) — around 800,000 people killed in about 100 days.",
+        wiki: WIKI + "Rwandan_genocide", img: IMG + "f/f2/Nyamata_Memorial_Site_13.jpg/330px-Nyamata_Memorial_Site_13.jpg" },
+      { year: 1998, cause: "Congo", full: "Second Congo War (1998–2003) — Africa's deadliest conflict; millions died, mostly from disease and hunger.",
+        wiki: WIKI + "Second_Congo_War", img: IMG + "d/db/DRC_raped_women.jpg/330px-DRC_raped_women.jpg" }
+    ]
   };
-  let svg, mode = "separate", x, y, regionSeries, W = NARROW, gutter = 0;
+  let svg, mode = "combined", x, y, regionSeries, W = NARROW, gutter = 0;
 
   function init() {
     const root = d3.select("#v6");
@@ -78,6 +95,8 @@ App.charts.v6 = (function () {
     g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(6));
     g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)")
       .attr("x", 0).attr("y", -32).attr("text-anchor", "end").text("Median life expectancy →");
+    g.append("text").attr("class", "axis-title").attr("x", iW / 2).attr("y", iH + 24)
+      .attr("text-anchor", "middle").text("Year →");
 
     const line = d3.line().defined(d => d.median != null).x(d => x(d.year)).y(d => y(d.median));
     S.s.meta.regions.forEach(region => {
@@ -119,26 +138,28 @@ App.charts.v6 = (function () {
       gp.append("line").attr("x1", x(S.s.currentYear)).attr("x2", x(S.s.currentYear)).attr("y1", 0).attr("y2", panelH)
         .attr("stroke", "#999").attr("stroke-dasharray", "2 2").attr("opacity", 0.7);
 
-      // crisis marker drawn ON the panel (a line + a dot at the dip + a short label)
-      const ev = EVENTS[region];
-      if (ev && ev.year >= S.s.meta.yearMin && ev.year <= S.s.meta.yearMax) {
+      // crisis markers drawn ON the panel (line + dot at the dip + short label). A region may
+      // have several (Sub-Saharan Africa has four). Hover for a Wikipedia photo; click to open it.
+      (EVENTS[region] || []).forEach((ev, k) => {
+        if (ev.year < S.s.meta.yearMin || ev.year > S.s.meta.yearMax) return;
         const ex = x(ev.year), pt = data.find(d => d.year === ev.year);
-        const near = ex > panelW * 0.66;   // flip the label left when the marker is near the right edge
-        gp.append("line").attr("x1", ex).attr("x2", ex).attr("y1", 0).attr("y2", panelH)
-          .attr("stroke", "#b3261e").attr("stroke-dasharray", "2 2").attr("opacity", 0.85);
-        if (pt && pt.min != null) gp.append("circle").attr("cx", ex).attr("cy", y(pt.min)).attr("r", 2.6)
+        const near = ex > panelW * 0.6;   // flip label left near the right edge
+        const grp = gp.append("g").style("cursor", "pointer")
+          .on("mousemove", e => App.util.tooltip.show(App.util.eventTooltip(ev), e))
+          .on("mouseleave", App.util.tooltip.hide)
+          .on("click", () => window.open(ev.wiki, "_blank", "noopener"));
+        grp.append("line").attr("x1", ex).attr("x2", ex).attr("y1", 0).attr("y2", panelH)
+          .attr("stroke", "#b3261e").attr("stroke-dasharray", "2 2").attr("opacity", 0.8);
+        if (pt && pt.min != null) grp.append("circle").attr("cx", ex).attr("cy", y(pt.min)).attr("r", 2.4)
           .attr("fill", "#b3261e").attr("stroke", "#fff").attr("stroke-width", 0.8);
-        gp.append("text").attr("x", near ? ex - 3 : ex + 3).attr("text-anchor", near ? "end" : "start")
-          .attr("y", (pt && pt.min != null) ? y(pt.min) - 4 : 12)
-          .attr("font-size", 8).attr("font-weight", 700).attr("fill", "#b3261e")
+        // stagger labels vertically so several markers in one panel don't collide
+        grp.append("text").attr("x", near ? ex - 3 : ex + 3).attr("text-anchor", near ? "end" : "start")
+          .attr("y", 22 + (k % 2) * 9)
+          .attr("font-size", 7.5).attr("font-weight", 700).attr("fill", "#b3261e")
           .attr("paint-order", "stroke").attr("stroke", "#fff").attr("stroke-width", 2).attr("stroke-linejoin", "round")
-          .text(`${ev.cause} ’${String(ev.year).slice(2)}`);
-        gp.append("rect").attr("x", ex - 5).attr("y", 0).attr("width", 10).attr("height", panelH).attr("fill", "transparent")
-          .style("cursor", "help")
-          .on("mousemove", e => App.util.tooltip.show(
-            `<div class="tt-title">${ev.year} — ${region}</div><div class="tt-sub" style="white-space:normal;max-width:200px">${ev.full} dragged the region's lowest life expectancy down sharply.</div>`, e))
-          .on("mouseleave", App.util.tooltip.hide);
-      }
+          .text(`${ev.cause} '${String(ev.year).slice(2)}`);
+        grp.append("rect").attr("x", ex - 5).attr("y", 0).attr("width", 10).attr("height", panelH).attr("fill", "transparent");
+      });
 
       // selected-country overlay inside its own region panel
       if (S.s.selectedCountry) {
@@ -209,16 +230,20 @@ App.charts.v6 = (function () {
   function buildExplain(root) {
     root.append("div").attr("class", "explain-panel").html(
       `<h4>How to read this</h4>
-       <p>One panel per region. The <b>line</b> is the median country's life expectancy; the <b>shaded band</b> is the
-          spread from the region's <b>lowest</b> to <b>highest</b> country.</p>
-       <p>A band that <b>narrows over time</b> = countries converging on similarly long lives — the health goal. A sudden
-          <b>dip in the floor</b> = a country crisis dragging the minimum down:</p>
+       <p>Each line is a region's <b>median</b> life expectancy; in "By region" the <b>band</b> spans its lowest to
+          highest country. A band that <b>narrows</b> = countries converging on similarly long lives.</p>
+       <p><b>Why Sub-Saharan Africa sits lowest:</b> it is the world's <b>poorest</b> region, carrying the heaviest
+          burden of <b>infectious disease</b> — malaria, and an <b>HIV/AIDS</b> epidemic that cut life expectancy in
+          the 1990s–2000s — plus high <b>child and maternal mortality</b>, recurring <b>famine and conflict</b>, and the
+          fewest doctors, clinics and vaccines. Low income and poor health reinforce each other.</p>
+       <p><b>Dips in the floor</b> mark country crises (see "By region") — hover a marker for a photo, click to open Wikipedia:</p>
        <ul class="explain-events">
-         <li><b>East Asia ~1977</b> — Cambodia (Khmer Rouge)</li>
-         <li><b>Sub-Saharan ~1994</b> — Rwandan genocide</li>
-         <li><b>Americas 2010</b> — Haiti earthquake</li>
+         <li><b>'68</b> — Biafra famine (Nigeria)</li>
+         <li><b>'84</b> — Ethiopian famine</li>
+         <li><b>'94</b> — Rwandan genocide</li>
+         <li><b>'98</b> — Second Congo War</li>
        </ul>
-       <p class="explain-foot">Switch to “Combined” to overlay all six regions on one axis.</p>`);
+       <p class="explain-foot">Toggle "By region" to see each region's band and its crisis markers.</p>`);
   }
 
   return { init, setWide };

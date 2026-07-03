@@ -10,6 +10,7 @@ node_modules/
 package.json
 package-lock.json
 _smoke_test.js
+_verify.js
 
 # OS / editor
 .DS_Store
