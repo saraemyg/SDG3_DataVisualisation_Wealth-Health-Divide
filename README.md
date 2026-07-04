@@ -24,42 +24,7 @@ Then open **http://localhost:8000/dashboard/** and hard-refresh once (**Ctrl/Cmd
 py -m http.server 8080          # then open  http://localhost:8080/dashboard/
 ```
 
-Everything (D3, topojson, the world map, all data) is bundled locally, so the dashboard runs fully **offline**. The only feature that needs internet is the optional Wikipedia **photo** shown when hovering an event marker — the click-through link and all text still work offline, and a missing image is silently hidden.
-
 ---
-
-## Assignment requirements — compliance check
-
-| Requirement | Status |
-|---|---|
-| ≥ 6 meaningful interactive visualizations (2 per student × 3) | ✅ 6 charts |
-| D3.js as the primary library; HTML / CSS / JavaScript | ✅ D3 v7 (vendored), plain HTML/CSS/JS |
-| Dataset ≥ 3,000 records | ✅ **9,620** records |
-| Dataset ≥ 10 attributes | ✅ **20** attributes |
-| Temporal or spatial dimension | ✅ both — `year` (1960–2011) and `country`/ISO code |
-| ≥ 3 analytical questions | ✅ 3 (Q1–Q3, see below) |
-| 5 interactivity types (hover, filter, zoom/pan, linked, animation) | ✅ all five (see "Interactivity") |
-| Cohesive, integrated dashboard | ✅ one coordinated single-page app |
-| Works in submitted form | ✅ runs from the bundle, offline |
-| Submission ≤ 2 MB (zipped) | ✅ **~0.58 MB** zipped |
-
----
-
-## The three analytical questions & six charts
-
-The dashboard is arranged as **three question-columns**, read left → right (Q1 → Q2 → Q3). Charts are numbered **by question**: Q1 = V1, V2 · Q2 = V3, V4 · Q3 = V5, V6.
-
-| # | Chart | Owner | Interactions |
-|---|---|---|---|
-| **Q1 — The Wealth Divide** (Targets 3.2, 3.4) | *Do OECD vs OPEC economies diverge in health?* | | |
-| **V1** | Animated bubble — GDP/cap × life expectancy, size = population | Sara | animation (play/scrub), hover, filter, linked highlight, expand |
-| **V2** | "Is the health gap closing?" — OECD/OPEC/Other median lines | Sara | life↔child toggle, year guide, event markers, linked overlay |
-| **Q2 — The GDP Threshold** (Target 3.2) | *Is there an income tipping point for survival?* | | |
-| **V3** | "Does money buy survival?" — GDP × child-mortality scatter, threshold + trend curve | Zaim | hover, current-year dots track the cursor, linked highlight, filter |
-| **V4** | "What drives a longer life?" — diverging bars of each factor's correlation | Jordan | hover, recomputes with year/filters |
-| **Q3 — Regional Convergence** (Targets 3.4, 3.8) | *Are regions catching up, or is geography destiny?* | | |
-| **V5** | "Are regions converging?" — combined region medians, toggle → 6 small multiples | Zaim | combined/by-region toggle, event markers, selected-country overlay |
-| **V6** | Choropleth world map — child mortality, 15 safest vs 15 deadliest gap panel | Jordan | wheel-zoom + drag-pan, hover, click → link, filter |
 
 ### The five interactivity types
 - **Hover tooltips** — every chart shows exact values; event markers (V2, V5) add a Wikipedia photo + description.
@@ -92,8 +57,6 @@ preprocessing/
 report.txt            the written report
 requirements.txt      Python deps for the (optional) rebuild
 ```
-
-> **Note on numbering:** the JS file names keep their original creation order, which differs from the by-question numbering used in the report/README. Mapping: V3 = `v5_threshold_scatter.js`, V4 = `v3_drivers.js`, V5 = `v6_small_multiples.js`, V6 = `v4_choropleth.js` (V1/V2 unchanged). The dashboard itself shows no V-numbers, so this is invisible to users.
 
 The dashboard is **coordinated**: a single store (`state.js`) holds the year cursor, filters and selection and broadcasts typed events (`year`/`filter`/`select`) that each chart subscribes to. All encodings (region colour, severity ramp, GDP/population scales) are defined **once** in `scales.js`, so a country looks the same in every view.
 
