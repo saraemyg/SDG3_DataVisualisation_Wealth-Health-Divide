@@ -26,7 +26,10 @@ py -m http.server 8080          # then open  http://localhost:8080/dashboard/
 
 ---
 
-### The five interactivity types
+## Interactivity — the five required types
+
+The six charts sit in three question-columns (Q1 → Q2 → Q3) and are fully coordinated:
+
 - **Hover tooltips** — every chart shows exact values; event markers (V2, V5) add a Wikipedia photo + description.
 - **Filtering** — header year cursor, OECD/OPEC/All toggle, region multi-select; plus V2's measure toggle and V5's view toggle.
 - **Zoom / pan** — V6 (the map) has wheel-zoom + drag-pan; any chart expands to a full-screen focus view.
